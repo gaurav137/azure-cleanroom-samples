@@ -15,31 +15,31 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
   - [Initializing the environment](#initializing-the-environment)
 - [Setting up the consortium](#setting-up-the-consortium)
   - [Member identity creation (operator)](#member-identity-creation-operator)
-  - [User identity creation (fabrikam, contosso)](#user-identity-creation-fabrikam-contosso)
+  - [User identity creation (northwind, woodgrove)](#user-identity-creation-northwind-woodgrove)
   - [Create the CCF instance (operator)](#create-the-ccf-instance-operator)
   - [Invite users to the consortium (operator)](#invite-users-to-the-consortium-operator)
-  - [Join the consortium (fabrikam, contosso)](#join-the-consortium-fabrikam-contosso)
-- [Publishing data](#publishing-data)
-  - [KEK-DEK based encryption approach](#kek-dek-based-encryption-approach)
-  - [Encrypt and upload data (fabrikam, contosso)](#encrypt-and-upload-data-fabrikam-contosso)
+  - [Accepting invitations (northwind, woodgrove)](#accepting-invitations-northwind-woodgrove)
 - [Setting up the Cleanroom environment](#setting-up-the-cleanroom-environment)
   - [Create the cluster instance (operator)](#create-the-cluster-instance-operator)
-  - [Adding data sets for collabaration (fabrikam, contosso)](#adding-data-sets-for-collabaration-fabrikam-contosso)
-  - [Adding query to execute in the collaboration (contosso)](#adding-query-to-execute-in-the-collaboration-contosso)
-  - [Setting up log collection (TBD)](#setting-up-log-collection-tbd)
-- [Finalizing query execution](#finalizing-query-execution)
-  - [Agreeing upon the query (fabrikam, contosso)](#agreeing-upon-the-query-fabrikam-contosso)
-  - [Configure resource access for clean room (fabrikam, contosso)](#configure-resource-access-for-clean-room-fabrikam-contosso)
+  - [Setting up log collection](#setting-up-log-collection)
+- [Publishing data](#publishing-data)
+  - [KEK-DEK based encryption approach](#kek-dek-based-encryption-approach)
+  - [Encrypt and upload data (northwind, woodgrove)](#encrypt-and-upload-data-northwind-woodgrove)
+  - [Configure resource access for clean room (northwind, woodgrove)](#configure-resource-access-for-clean-room-northwind-woodgrove)
+  - [Adding datasets for collabaration (northwind, woodgrove)](#adding-datasets-for-collabaration-northwind-woodgrove)
+- [Setting up query execution](#setting-up-query-execution)
+  - [Adding query to execute in the collaboration (woodgrove)](#adding-query-to-execute-in-the-collaboration-woodgrove)
+  - [Agreeing upon the query for execution (northwind, woodgrove)](#agreeing-upon-the-query-for-execution-northwind-woodgrove)
 - [Using the clean room](#using-the-clean-room)
-  - [Executing the query (constosso, client)](#executing-the-query-constosso-client)
-  - [View output (contosso, client)](#view-output-contosso-client)
+  - [Executing the query (woodgrove, client)](#executing-the-query-woodgrove-client)
+  - [View output (woodgrove, client)](#view-output-woodgrove-client)
 
 # Overview
 
 <!--TODO: Add links to corresponding readme in product repo for each capability.-->
 The demo shows collaborations where one or more of the following parties come together:
-  - **_Fabrikam_**, collaborator owning sensitive dataset(s) that can be consumed by applications inside a CCR.
-  - **_Contosso_**, collaborator that wants to run a query over the sensitive data along with bringing in any of its own sensitive dataset(s) for consumption inside a CCR.
+  - **_Northwind_**, collaborator owning sensitive dataset(s) that can be consumed by applications inside a CCR.
+  - **_Woodgrove_**, collaborator that wants to run a query over the sensitive data along with bringing in any of its own sensitive dataset(s) for consumption inside a CCR.
 
 The following parties are additionally involved in completing the end to end demo:
   - **_Operator_**, clean room provider hosting the CCR infrastructure.
@@ -62,7 +62,7 @@ Each party requires an independent environment. To create such an environment, o
 
 
 ```powershell
-$persona = # Set to one of: "operator" "fabrikam" "contosso" "client"
+$persona = # Set to one of: "operator" "northwind" "woodgrove" "client"
 ```
 <!-- TODO: Is it worthwhile adding a selector instead?
 ```powershell
@@ -76,7 +76,7 @@ function Choose-Option([string[]] $options, [string] $prompt) {
   $choice=Read-Host $displayString 
   return $options[([convert]::ToInt32($choice))] 
 } `
-$persona = (Choose-Option -options @('operator','litware','fabrikam','contosso','client') -prompt 'persona')
+$persona = (Choose-Option -options @('operator','litware','northwind','woodgrove','client') -prompt 'persona')
 ```
 -->
 
@@ -128,8 +128,8 @@ This command create the resource group and other Azure resources required for ex
 <br>
 
 The following Azure resources are created as part of initialization:
- - Storage Account for `fabrikam` and `contosso` environments to use as a backing store for clean room input and output.
- - Storage Account with public blob access enabled for `fabrikam` and `contosso` environments to store federated identity token issuer details.
+ - Storage Account for `northwind` and `woodgrove` environments to use as a backing store for clean room input and output.
+ - Storage Account with public blob access enabled for `northwind` and `woodgrove` environments to store federated identity token issuer details.
  - Storage Account with shared key access enabled for `operator` environment to use as a backing store for CCF deployments.
 </details>
 <br>
@@ -161,7 +161,7 @@ The operator of the CCF network creates their member identity by generating thei
 </details>
 <br>
 
-## User identity creation (fabrikam, contosso)
+## User identity creation (northwind, woodgrove)
 The users in the collaboration are identified by their Microsoft account (work/school or Azure account). Their login id (eg `foo@outlook.com`) is required for adding them to the collaboration.
 
 Each collaborator supplies their Microsoft account details by executing the following command:
@@ -194,7 +194,7 @@ The _operator_ (who is hosting the CCF instance) brings up a CCF instance using 
 <br>
 
 ## Invite users to the consortium (operator)
-The _operator_ (who is hosting the CCF instance) invites each user in the collaboration with the consortium using the identity details generated [above](#member-identity-creation-operator-litware-fabrikam-contosso).
+The _operator_ (who is hosting the CCF instance) invites each user in the collaboration with the consortium using the identity details generated [above](#member-identity-creation-operator-litware-northwind-woodgrove).
 
 
 ```powershell
@@ -218,7 +218,7 @@ The _operator_ (who is hosting the CCF instance) invites each user in the collab
 </details>
 <br>
 
-## Join the consortium (fabrikam, contosso)
+## Accepting invitations (northwind, woodgrove)
 Once the collaborators have been added, they now need to accept their invitation before they can participate in the collaboration.
 
 ```powershell
@@ -237,9 +237,26 @@ With the above steps the consortium creation that drives the creation and execut
 <details><summary><em>Azure CLI commands used</em></summary>
 <br>
 
-- `az cleanroom governance member activate` - accept an invitation to join the consortium.
+- `az cleanroom governance member activate` - accept an invitation to Accepting invitations.
 </details>
 <br>
+
+# Setting up the Cleanroom environment
+
+## Create the cluster instance (operator)
+
+The _operator_ (who is hosting the cleanroom infra) brings up AKS cluster instance to run the Analytics workload (query). This cluster uses pods backed by Confidential ACI by executing this command:
+
+```powershell
+./scripts/consortium/start-cleanroom-cluster.ps1
+```
+
+> [!NOTE]
+> In the default sample environment, the containers for all participants have their `/home/samples/demo-resources/public` mapped to a single host directory, so details about the cluster endpoint would be available to all parties automatically once generated. If the configuration has been changed, the CCF details needs to made available in `/home/samples/demo-resources/public` of each user before executing subsequent steps.
+
+## Setting up log collection
+
+TBD
 
 # Publishing data
 Sensitive data that any of the parties want to bring into the collaboration is ideally encrypted in a manner that ensures the key to decrypt this data will only be released to the clean room environment. This encryption is optional in case a collaborator does not want/use Client Side Encryption (CSE) for their data. This demo showcases this approach.
@@ -247,7 +264,7 @@ Sensitive data that any of the parties want to bring into the collaboration is i
 ## KEK-DEK based encryption approach
 The samples follow an envelope encryption model for encryption of data. For the encryption of the data, a symmetric **_Data Encryption Key_** (**DEK**) is generated. An asymmetric key, called the *Key Encryption Key* (KEK), is generated subsequently to wrap the DEK. The wrapped DEKs are stored in a Key Vault as a secret and the KEK is imported into an MHSM/Premium Key Vault behind a secure key release (SKR) policy. Within the clean room, the wrapped DEK is read from the Key Vault and the KEK is retrieved from the MHSM/Premium Key Vault following the secure key release [protocol](https://learn.microsoft.com/en-us/azure/confidential-computing/skr-flow-confidential-containers-azure-container-instance). The DEKs are unwrapped within the cleanroom and then used to access the storage containers.
 
-## Encrypt and upload data (fabrikam, contosso)
+## Encrypt and upload data (northwind, woodgrove)
 It is assumed that the collaborators have had out-of-band communication and have agreed on the data sets that will be shared. In these samples, the protected data is in the form of one or more files in one or more directories at each collaborators end.
 
 These dataset(s) in the form of files are encrypted using the [KEK-DEK](#kek-dek-based-encryption-approach) approach and uploaded into the storage account created as part of [initializing the sample environment](#initializing-the-environment). Each directory in the source dataset would correspond to one Azure Blob storage container, and all files in the directory are uploaded as blobs to Azure Storage using specified encryption mode - client-side encryption <!-- TODO: Add link to explanation of CSE. -->/ server-side encryption using [customer provided key](https://learn.microsoft.com/azure/storage/blobs/encryption-customer-provided-keys). Only one symmetric key (DEK) is created per directory (blob storage container).
@@ -296,21 +313,22 @@ The following command initializes datastores and uploads encrypted datasets requ
 </details>
 <br>
 
+## Configure resource access for clean room (northwind, woodgrove)
+All the collaborating parties need to give access to the clean room so that the clean room environment can access resources in their respective tenants.
 
-# Setting up the Cleanroom environment
+The DEKs that were created for dataset encryption as part of [data publishing](#publishing-data) are now wrapped using a KEK generated for each contract. The KEK is uploaded in Key Vault and configured with a secure key release (SKR) policy while the wrapped-DEK is saved as a secret in Key Vault.
 
-## Create the cluster instance (operator)
+The managed identities created earlier as part of [setting up the cleanroom environment](#setting-up-the-cleanroom-environment) are given access to resources, and a federated credential is setup for these managed identities using the CGS OIDC identity provider. This federated credential allows the clean room to obtain an attestation based managed identity access token during execution.
 
-The _operator_ (who is hosting the cleanroom infra) brings up AKS cluster instance to run the Analytics workload (query). This cluster uses pods backed by Confidential ACI by executing this command:
 
 ```powershell
-./scripts/consortium/start-cleanroom-cluster.ps1
+./scripts/contract/grant-deployment-access.ps1 -contractId $contractId -demo $demo
 ```
 
-> [!NOTE]
-> In the default sample environment, the containers for all participants have their `/home/samples/demo-resources/public` mapped to a single host directory, so details about the cluster endpoint would be available to all parties automatically once generated. If the configuration has been changed, the CCF details needs to made available in `/home/samples/demo-resources/public` of each user before executing subsequent steps.
+> [!IMPORTANT]
+> The command configures an OIDC issuer with the consortium at an Azure Active Directory Tenant level. In a setup where multiple parties belongs to the same tenant, it is important to avoid any race conditions in setting up this OIDC issuer. For such setups, it is recommended that this command should be executed by the affected parties one after the other, and not simultaneously.
 
-## Adding data sets for collabaration (fabrikam, contosso)
+## Adding datasets for collabaration (northwind, woodgrove)
 
 The following command adds details about the datastores to be accessed by the clean room and their mode (source/sink) to the contract fragment:
 
@@ -334,7 +352,8 @@ The following command adds details about the datastores to be accessed by the cl
 </details>
 <br>
 
-## Adding query to execute in the collaboration (contosso)
+# Setting up query execution
+## Adding query to execute in the collaboration (woodgrove)
 
 The following command adds details about the query to be executed within the clean room:
 
@@ -343,47 +362,27 @@ The following command adds details about the query to be executed within the cle
 pwsh ./demos/$demo/add-query.ps1
 ```
 
-## Setting up log collection (TBD)
-
-TBD
-
-# Finalizing query execution
+## Agreeing upon the query for execution (northwind, woodgrove)
 
 Once the collaborating parties have finished with above steps, the query needs to be approved by each user whose dataset would get accessed by it before the clean room can execute the query. This agreement is captured formally by the **_query document_** hosted in the consortium. This is a YAML document that is generated by consuming all the dataset inputs and captures the query execution collaboration details in a formal [*clean room specification*](../../docs/cleanroomspec.md).
 
-From a confidentiality perspective, the query document creation and proposal can be initiated by any of the collaborators (fabrikam or contosso) without affecting the zero-trust assurances. In these samples, we assume that it was agreed upon that the *consumer* undertakes this responsibility.
+From a confidentiality perspective, the query document creation and proposal can be initiated by any of the collaborators (northwind or woodgrove) without affecting the zero-trust assurances. In these samples, we assume that it was agreed upon that the *consumer* undertakes this responsibility.
 
-## Agreeing upon the query (fabrikam, contosso)
 <!--TODO: Add query to figure out the contract ID by hitting CGS.-->
 ```powershell
 ./scripts/contract/confirm-query.ps1 -contractId $contractId -demo $demo
 ```
 
-## Configure resource access for clean room (fabrikam, contosso)
-All the collaborating parties need to give access to the clean room so that the clean room environment can access resources in their respective tenants.
-
-The DEKs that were created for dataset encryption as part of [data publishing](#publishing-data) are now wrapped using a KEK generated for each contract. The KEK is uploaded in Key Vault and configured with a secure key release (SKR) policy while the wrapped-DEK is saved as a secret in Key Vault.
-
-The managed identities created earlier as part of [setting up the cleanroom environment](#setting-up-the-cleanroom-environment) are given access to resources, and a federated credential is setup for these managed identities using the CGS OIDC identity provider. This federated credential allows the clean room to obtain an attestation based managed identity access token during execution.
-
-
-```powershell
-./scripts/contract/grant-deployment-access.ps1 -contractId $contractId -demo $demo
-```
-
-> [!IMPORTANT]
-> The command configures an OIDC issuer with the consortium at an Azure Active Directory Tenant level. In a setup where multiple parties belongs to the same tenant, it is important to avoid any race conditions in setting up this OIDC issuer. For such setups, it is recommended that this command should be executed by the affected parties one after the other, and not simultaneously.
-
-
 # Using the clean room
-## Executing the query (constosso, client)
-The party interested in getting the query results (*contosso* in our case) can do so by running the following:
+## Executing the query (woodgrove, client)
+The party interested in getting the query results (*woodgrove* in our case) can do so by running the following:
 
 ```powershell
 ./scripts/cleanroom/run-query.ps1 -contractId $contractId
 ```
+Note: for *client* to run the query it needs to be added as a user that does not publish any dataset or perform any query approval.
 
-## View output (contosso, client)
+## View output (woodgrove, client)
 
 The query execution output is written to the datasinks configured. Check the Azure storage container or S3 bucket to see the output files that would get generated.
 
