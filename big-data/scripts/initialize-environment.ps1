@@ -182,18 +182,26 @@ else {
 #   b) Application developer to authenticate telemetry access.
 #
 if ($isCollaborator) {
-    $oidcStorageAccount = $($overrides['$OIDC_STORAGE_ACCOUNT_NAME'] ?? "oidcsa${uniqueString}")
-    $oidcRG = $($overrides['$OIDC_STORAGE_ACCOUNT_RESOURCE_GROUP'] ?? "${resourceGroup}")
-    $result.oidcsa = Create-Storage-Resources `
-        -resourceGroup $oidcRG `
-        -storageAccountName @($oidcStorageAccount) `
-        -objectId $objectId
-    az storage account update `
-        --name $oidcStorageAccount `
-        --resource-group $oidcRG `
-        --allow-blob-public-access true
-    Write-Log OperationCompleted `
-        "Enabled public blob access for '$oidcStorageAccount'."
+    if ($null -ne $overrides['$OIDC_STORAGE_ACCOUNT_NAME']) {
+        $oidcStorageAccount = $overrides['$OIDC_STORAGE_ACCOUNT_NAME']
+        $oidcRG = $overrides['$OIDC_STORAGE_ACCOUNT_RESOURCE_GROUP']
+        $result.oidcsa = (az storage account show --name $oidcStorageAccount --resource-group $oidcRG) | ConvertFrom-Json
+    }
+    else {
+        
+        $oidcStorageAccount = $($overrides['$OIDC_STORAGE_ACCOUNT_NAME'] ?? "oidcsa${uniqueString}")
+        $oidcRG = $($overrides['$OIDC_STORAGE_ACCOUNT_RESOURCE_GROUP'] ?? "${resourceGroup}")
+        $result.oidcsa = Create-Storage-Resources `
+            -resourceGroup $oidcRG `
+            -storageAccountName @($oidcStorageAccount) `
+            -objectId $objectId
+        az storage account update `
+            --name $oidcStorageAccount `
+            --resource-group $oidcRG `
+            --allow-blob-public-access true
+        Write-Log OperationCompleted `
+            "Enabled public blob access for '$oidcStorageAccount'."
+    }
 }
 else {
     Write-Log Warning `

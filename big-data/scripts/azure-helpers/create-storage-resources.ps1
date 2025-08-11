@@ -15,8 +15,21 @@ function Create-Storage-Resources {
             $storageAccountResult = (az storage account show --name $storageAccountName --resource-group $resourceGroup) | ConvertFrom-Json
         }
 
-        Write-Host "Assigning 'Storage Blob Data Contributor' permissions to logged in user"
-        az role assignment create --role "Storage Blob Data Contributor" --scope $storageAccountResult.id --assignee-object-id $objectId --assignee-principal-type $(Get-Assignee-Principal-Type)
+        $role = "Storage Blob Data Contributor"
+        $roleAssignment = (az role assignment list `
+                --assignee-object-id $objectId `
+                --scope $storageAccountResult.id `
+                --role $role `
+                --fill-principal-name false `
+                --fill-role-definition-name false) | ConvertFrom-Json
+
+        if ($roleAssignment.Length -eq 1) {
+            Write-Host "$role permission on the storage account already exists, skipping assignment"
+        }
+        else {
+            Write-Host "Assigning '$role' permissions to logged in user"
+            az role assignment create --role $role --scope $storageAccountResult.id --assignee-object-id $objectId --assignee-principal-type $(Get-Assignee-Principal-Type)
+        }
         $storageAccountResult
 
         if ($env:GITHUB_ACTIONS -eq "true") {
