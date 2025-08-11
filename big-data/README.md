@@ -112,7 +112,7 @@ The command shows the subscription that will be used for resource creation by th
 > - If another subscription is to be used for creating resources, execute `az account set` to select if before executing the remaining steps.
 
 
-Post login, initialize the enviroment for executing the samples by executing the following command from the `/home/samples` directory:
+Post login, initialize the environment for executing the samples by executing the following command from the `/home/samples` directory:
 
 ```powershell
 ./scripts/initialize-environment.ps1
