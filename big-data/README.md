@@ -62,7 +62,7 @@ Each party requires an independent environment. To create such an environment, o
 
 
 ```powershell
-$persona = # Set to one of: "operator" "northwind" "woodgrove" "client"
+$persona = # Set to one of: "operator" "northwind" "woodgrove"
 ```
 <!-- TODO: Is it worthwhile adding a selector instead?
 ```powershell
@@ -81,7 +81,7 @@ $persona = (Choose-Option -options @('operator','litware','northwind','woodgrove
 -->
 
 ```powershell
-./start-environment.ps1 -shareCredentials -persona $persona
+./big-data/start-environment.ps1 -shareCredentials -persona $persona
 ```
 
 This create a separate docker container for each party that contains an isolated enviroment, while sharing some host volumes across all of them to simplify sharing 'public' configuration details across parties.
@@ -115,7 +115,7 @@ The command shows the subscription that will be used for resource creation by th
 Post login, initialize the enviroment for executing the samples by executing the following command from the `/home/samples` directory:
 
 ```powershell
-./scripts/initialize-environment.ps1
+./big-data/scripts/initialize-environment.ps1
 ```
 
 This command create the resource group and other Azure resources required for executing the samples such as a storage account, container registry and key vault (Premium).
