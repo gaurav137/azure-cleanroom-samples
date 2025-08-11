@@ -146,12 +146,12 @@ if ($shareCredentials -or ($persona -eq "operator")) {
 # Launch CCF provider for 'operator' using shared Azure credentials.
 #
 if ($persona -eq "operator") {
-    #
-    # Use overrides till latest images are available in mcr.microsoft.com.
-    #
     & {
         Write-Log OperationStarted `
             "Setting up CCF provider..."
+        #
+        # Use AZCLI_ overrides till latest images are available in mcr.microsoft.com.
+        #
         $envVars = @{
             "AZCLI_CCF_PROVIDER_CLIENT_IMAGE"                                  = "$repo/ccf/ccf-provider-client:$tag"
             "AZCLI_CCF_PROVIDER_PROXY_IMAGE"                                   = "$repo/ccr-proxy:$tag"
