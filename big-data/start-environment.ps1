@@ -17,8 +17,8 @@ param(
     [switch]$overwrite,
     [switch]$shareCredentials,
 
-    [string]$repo = "cleanroomsamples.azurecr.io/big-data",
-    [string]$tag = "11082025"
+    [string]$repo = "cleanroomemuprregistry.azurecr.io",
+    [string]$tag = "16749412789"
 )
 
 #https://learn.microsoft.com/en-us/powershell/scripting/learn/experimental-features?view=powershell-7.4#psnativecommanderroractionpreference
@@ -203,12 +203,20 @@ if ($persona -eq "operator") {
             "Creating samples environment '$containerName' using image '$imageName'..."
 
         # TODO: Cut across to a pre-built docker image?
-        $dockerArgs = "image build -t $imageName -f $dockerFileDir/Dockerfile.azure-cleanroom-samples `".`""
+        $dockerArgs = "image build -t $imageName -f $dockerFileDir/Dockerfile.azure-cleanroom-samples `"./big-data`""
         $customCliExtensions = @(Get-Item -Path "./docker/*.whl")
         if (0 -ne $customCliExtensions.Count) {
             Write-Log Warning `
                 "Using custom az cli extensions: $customCliExtensions..."
             $dockerArgs += " --build-arg EXTENSION_SOURCE=local"
+        }
+        else {
+            $fileName = "cleanroom-1.0.40206-py2.py3-none-any"
+            Write-Log Warning `
+                "Using custom az cli extension from: $repo/cli/cleanroom-whl:$tag and filename:$fileName ..."
+            $dockerArgs += " --build-arg EXTENSION_REGISTRY=$repo/cli"
+            $dockerArgs += " --build-arg EXTENSION_TAG=$tag"
+            $dockerArgs += " --build-arg EXTENSION_FILENAME=$fileName"
         }
         Start-Process docker $dockerArgs -Wait
 

@@ -115,7 +115,7 @@ The command shows the subscription that will be used for resource creation by th
 Post login, initialize the enviroment for executing the samples by executing the following command from the `/home/samples` directory:
 
 ```powershell
-./big-data/scripts/initialize-environment.ps1
+./scripts/initialize-environment.ps1
 ```
 
 This command create the resource group and other Azure resources required for executing the samples such as a storage account, container registry and key vault (Premium).

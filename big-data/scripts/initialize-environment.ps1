@@ -37,7 +37,25 @@ if (!$isCollaborator -and !$isOperator) {
 
 Import-Module $PSScriptRoot/azure-helpers/azure-helpers.psm1 -Force -DisableNameChecking
 
+Write-Log OperationStarted `
+    "Logging into Azure..."
+az login --identity 1>$null
+
 Test-AzureAccessToken
+
+if ($overridesFilePath -ne "") {
+    $overrides = Get-Content $overridesFilePath | Out-String | ConvertFrom-StringData
+}
+else {
+    $overrides = @{}
+}
+
+$subs = $overrides['$SUBSCRIPTION']
+if ($subs -ne "") {
+    Write-Log Warning `
+        "Setting active Azure subscription to $subs."
+    az account set --subscription $subs
+}
 
 Write-Log OperationStarted `
     "Creating resource group '$resourceGroup' in '$resourceGroupLocation'..."
@@ -54,12 +72,6 @@ $result = @{
 }
 
 $uniqueString = Get-UniqueString($resourceGroup)
-if ($overridesFilePath -ne "") {
-    $overrides = Get-Content $overridesFilePath | Out-String | ConvertFrom-StringData
-}
-else {
-    $overrides = @{}
-}
 
 $objectId = GetLoggedInEntityObjectId
 
@@ -69,6 +81,7 @@ az provider register -n 'Microsoft.ContainerInstance'
 az provider register -n 'Microsoft.ContainerRegistry'
 az provider register -n 'Microsoft.KeyVault'
 az provider register -n 'Microsoft.ManagedIdentity'
+az provider register -n 'Microsoft.ContainerService'
 
 #
 # Create secure key stores for:
@@ -170,13 +183,14 @@ else {
 #
 if ($isCollaborator) {
     $oidcStorageAccount = $($overrides['$OIDC_STORAGE_ACCOUNT_NAME'] ?? "oidcsa${uniqueString}")
+    $oidcRG = $($overrides['$OIDC_STORAGE_ACCOUNT_RESOURCE_GROUP'] ?? "${resourceGroup}")
     $result.oidcsa = Create-Storage-Resources `
-        -resourceGroup $resourceGroup `
+        -resourceGroup $oidcRG `
         -storageAccountName @($oidcStorageAccount) `
         -objectId $objectId
     az storage account update `
         --name $oidcStorageAccount `
-        --resource-group $resourceGroup `
+        --resource-group $oidcRG `
         --allow-blob-public-access true
     Write-Log OperationCompleted `
         "Enabled public blob access for '$oidcStorageAccount'."

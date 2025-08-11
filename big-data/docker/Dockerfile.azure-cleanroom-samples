@@ -2,6 +2,7 @@
 ARG EXTENSION_SOURCE=official
 ARG EXTENSION_FILENAME=cleanroom-5.0.0-py2.py3-none-any
 ARG EXTENSION_REGISTRY=mcr.microsoft.com/azurecleanroom/cli
+ARG EXTENSION_TAG=5.0.0
 
 FROM mcr.microsoft.com/powershell AS docker-azcli-base
 # Required packages.
@@ -19,7 +20,7 @@ RUN chmod go+r /etc/apt/keyrings/githubcli-archive-keyring.gpg
 COPY docker/docker.list /etc/apt/sources.list.d/docker.list
 RUN apt-get update && apt-get install -y docker-ce-cli
 # Install az cli.
-ARG AZCLI_VERSION=2.63.0-1
+ARG AZCLI_VERSION=2.75.0-1
 COPY docker/azure-cli.sources /etc/apt/sources.list.d/azure-cli.sources
 RUN apt-get update && apt-get install -y azure-cli=${AZCLI_VERSION}~jammy
 # Install gh cli.
@@ -37,24 +38,26 @@ RUN tar -xf ./azcopy.tar.gz -C ./azcopy --strip-components=1
 RUN mv azcopy/azcopy /usr/bin
 RUN chmod 755 /usr/bin/azcopy
 # Install az cli extensions.
-RUN az extension add --name confcom -y
+#RUN az extension add --name confcom -y --allow-preview true
 # Install ORAS client.
 RUN curl -LO "https://github.com/oras-project/oras/releases/download/v1.2.0/oras_1.2.0_linux_amd64.tar.gz"
 RUN mkdir -p oras-install/
 RUN tar -zxf oras_1.2.0_*.tar.gz -C oras-install/
 RUN mv oras-install/oras /usr/local/bin/
 # Install OPA client.
-RUN curl -L -o opa https://openpolicyagent.org/downloads/v0.70.0/opa_linux_amd64_static
-RUN mv opa /usr/bin
-RUN chmod 755 /usr/bin/opa
+#RUN curl -L -o opa https://openpolicyagent.org/downloads/v0.70.0/opa_linux_amd64_static
+#RUN mv opa /usr/bin
+#RUN chmod 755 /usr/bin/opa
 
 FROM samples-base AS install-extension-official
 # Install WHL from official source.
 ARG EXTENSION_FILENAME
+ARG EXTENSION_REGISTRY
+ARG EXTENSION_TAG
 ONBUILD RUN echo "Installing clean room extension '${EXTENSION_FILENAME}' from official source."
 ONBUILD WORKDIR /home/scratch
-ONBUILD RUN oras pull ${EXTENSION_REGISTRY}/cleanroom-whl:5.0.0
-ONBUILD RUN az extension add --source /home/scratch/cleanroom-5.0.0-py2.py3-none-any.whl -y --allow-preview true
+ONBUILD RUN oras pull ${EXTENSION_REGISTRY}/cleanroom-whl:${EXTENSION_TAG}
+ONBUILD RUN az extension add --source /home/scratch/${EXTENSION_FILENAME}.whl -y --allow-preview true
 
 FROM samples-base AS install-extension-local
 # Install WHL from local source.

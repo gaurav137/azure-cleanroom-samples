@@ -12,7 +12,7 @@ function Create-Storage-Resources {
         $storageAccountResult = (az storage account create --name $storageAccountName --resource-group $resourceGroup --min-tls-version TLS1_2 --allow-shared-key-access $false) | ConvertFrom-Json
 
         if ($null -eq $storageAccountResult) {
-            $storageAccountResult = (az storage account create --name $storageAccountName --resource-group $resourceGroup) | ConvertFrom-Json
+            $storageAccountResult = (az storage account show --name $storageAccountName --resource-group $resourceGroup) | ConvertFrom-Json
         }
 
         Write-Host "Assigning 'Storage Blob Data Contributor' permissions to logged in user"
