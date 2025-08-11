@@ -51,7 +51,7 @@ else {
 }
 
 $subs = $overrides['$SUBSCRIPTION']
-if ($subs -ne "") {
+if ($null -ne $subs) {
     Write-Log Warning `
         "Setting active Azure subscription to $subs."
     az account set --subscription $subs
@@ -85,8 +85,8 @@ az provider register -n 'Microsoft.ContainerService'
 
 #
 # Create secure key stores for:
-#   a) Collaborators to store data set encyrption keys.
-#   b) Application developer to store telemetry encyrption keys.
+#   a) Collaborators to store data set encryption keys.
+#   b) To store telemetry encryption keys.
 #
 if ($isCollaborator) {
     $kvName = $($overrides['$KEYVAULT_NAME'] ?? "${uniqueString}kv")
@@ -179,7 +179,7 @@ else {
 #
 # Create OIDC storage account for:
 #   a) Collaborators to authenticate data sets access.
-#   b) Application developer to authenticate telemetry access.
+#   b) To authenticate telemetry access.
 #
 if ($isCollaborator) {
     if ($null -ne $overrides['$OIDC_STORAGE_ACCOUNT_NAME']) {
