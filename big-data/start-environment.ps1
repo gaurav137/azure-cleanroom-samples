@@ -78,20 +78,6 @@ $secretDir = "secret"
 New-Item -ItemType Directory -Force -Path "$personaBase/$secretDir"
 
 #
-# Use overrides till latest images are available in mcr.microsoft.com.
-#
-$env:AZCLI_CCF_PROVIDER_CLIENT_IMAGE = "$repo/ccf/ccf-provider-client:$tag"
-$env:AZCLI_CCF_PROVIDER_PROXY_IMAGE = "$repo/ccr-proxy:$tag"
-$env:AZCLI_CCF_PROVIDER_ATTESTATION_IMAGE = "$repo/ccr-attestation:$tag"
-$env:AZCLI_CCF_PROVIDER_SKR_IMAGE = "$repo/skr:$tag"
-$env:AZCLI_CCF_PROVIDER_RUN_JS_APP_SNP_IMAGE = "$repo/ccf/app/run-js/snp:$tag"
-$env:AZCLI_CCF_PROVIDER_RECOVERY_AGENT_IMAGE = "$repo/ccf/ccf-recovery-agent:$tag"
-$env:AZCLI_CCF_PROVIDER_RECOVERY_SERVICE_IMAGE = "$repo/ccf/ccf-recovery-service:$tag"
-$env:AZCLI_CCF_PROVIDER_CONTAINER_REGISTRY_URL = "$repo"
-$env:AZCLI_CCF_PROVIDER_NETWORK_SECURITY_POLICY_DOCUMENT_URL = "$repo/policies/ccf/ccf-network-security-policy:$tag"
-$env:AZCLI_CCF_PROVIDER_RECOVERY_SERVICE_SECURITY_POLICY_DOCUMENT_URL = "$repo/policies/ccf/ccf-recovery-service-security-policy:$tag"
-
-#
 # Launch credential proxy for operator or if sharing credentials.
 #
 if ($shareCredentials -or ($persona -eq "operator")) {
@@ -160,12 +146,27 @@ if ($shareCredentials -or ($persona -eq "operator")) {
 # Launch CCF provider for 'operator' using shared Azure credentials.
 #
 if ($persona -eq "operator") {
+    #
+    # Use overrides till latest images are available in mcr.microsoft.com.
+    #
     & {
         Write-Log OperationStarted `
             "Setting up CCF provider..."
-
-        $env:CREDENTIAL_PROXY_ENDPOINT = $credentialProxyEndpoint
-        docker compose -p $ccfProviderName -f $dockerFileDir/ccf/docker-compose.yaml up -d --remove-orphans
+        $envVars = @{
+            "AZCLI_CCF_PROVIDER_CLIENT_IMAGE"                                  = "$repo/ccf/ccf-provider-client:$tag"
+            "AZCLI_CCF_PROVIDER_PROXY_IMAGE"                                   = "$repo/ccr-proxy:$tag"
+            "AZCLI_CCF_PROVIDER_ATTESTATION_IMAGE"                             = "$repo/ccr-attestation:$tag"
+            "AZCLI_CCF_PROVIDER_SKR_IMAGE"                                     = "$repo/skr:$tag"
+            "AZCLI_CCF_PROVIDER_RUN_JS_APP_VIRTUAL_IMAGE"                      = "$repo/ccf/app/run-js/virtual:$tag"
+            "AZCLI_CCF_PROVIDER_RUN_JS_APP_SNP_IMAGE"                          = "$repo/ccf/app/run-js/snp:$tag"
+            "AZCLI_CCF_PROVIDER_RECOVERY_AGENT_IMAGE"                          = "$repo/ccf/ccf-recovery-agent:$tag"
+            "AZCLI_CCF_PROVIDER_RECOVERY_SERVICE_IMAGE"                        = "$repo/ccf/ccf-recovery-service:$tag"
+            "AZCLI_CCF_PROVIDER_CONTAINER_REGISTRY_URL"                        = "$repo"
+            "AZCLI_CCF_PROVIDER_NETWORK_SECURITY_POLICY_DOCUMENT_URL"          = "$repo/policies/ccf/ccf-network-security-policy:$tag"
+            "AZCLI_CCF_PROVIDER_RECOVERY_SERVICE_SECURITY_POLICY_DOCUMENT_URL" = "$repo/policies/ccf/ccf-recovery-service-security-policy:$tag"
+            "CREDENTIAL_PROXY_ENDPOINT"                                        = $credentialProxyEndpoint
+        }
+        Start-Process docker -ArgumentList "compose -p $ccfProviderName -f $dockerFileDir/ccf/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait
 
         $providerPort = (docker compose -p $ccfProviderName port "client" 8080).Split(':')[1]
         Write-Log OperationCompleted `
