@@ -137,6 +137,8 @@ az cleanroom governance contract create `
     --id $contractId `
     --governance-client $cgsClient
 
+$contractId | Out-File $publicDir/analytics.contract-id
+
 # Submitting a contract proposal.
 $version = (az cleanroom governance contract show `
         --id $contractId `
