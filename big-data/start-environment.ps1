@@ -235,6 +235,8 @@ if ($persona -eq "operator") {
             -v "$($sharedBase):$virtualBase" `
             -v "$personaBase/$($privateDir):$virtualBase/$privateDir" `
             -v "$personaBase/$($secretDir):$virtualBase/$secretDir" `
+            -v "./big-data/scripts:/home/samples/scripts" `
+            -v "./big-data/demos:/home/samples/demos" `
             --network host `
             --add-host host.docker.internal:host-gateway `
             --name $containerName `

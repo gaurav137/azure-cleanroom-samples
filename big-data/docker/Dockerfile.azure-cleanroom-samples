@@ -69,10 +69,10 @@ ONBUILD RUN az extension add --source /home/scratch/${EXTENSION_FILENAME}.whl -y
 
 FROM install-extension-${EXTENSION_SOURCE}
 # Copy samples payload.
-WORKDIR /home/samples/demos
-COPY ./demos .
-WORKDIR /home/samples/scripts
-COPY ./scripts .
+#WORKDIR /home/samples/demos
+#COPY ./demos .
+#WORKDIR /home/samples/scripts
+#COPY ./scripts .
 # Customize the powershell prompt by adding a custom profile
 COPY ./scripts/common/ps-profile.ps1 /opt/microsoft/powershell/7/profile.ps1
 # Done!

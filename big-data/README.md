@@ -164,10 +164,17 @@ The operator of the CCF network creates their member identity by generating thei
 ## User identity creation (northwind, woodgrove)
 The users in the collaboration are identified by their Microsoft account (work/school or Azure account). Their login id (eg `foo@outlook.com`) is required for adding them to the collaboration.
 
-Each collaborator supplies their Microsoft account details by executing the following command:
+For demo purposes you can create Microsoft accounts by visiting [outlook.com](https://outlook.com), choosing *Sign In* and the *Create one* option.
+![alt text](sign-in.png)
+
+![alt text](create-one.png)
+
+![alt text](new-email.png)
+
+After signing up for the accounts and choosing the email address each collaborator supplies their Microsoft account details by executing the following command:
 
 ```powershell
-./scripts/consortium/initialize-user.ps1
+./scripts/consortium/initialize-user.ps1 -email <email>
 ```
 
 ## Create the CCF instance (operator)
