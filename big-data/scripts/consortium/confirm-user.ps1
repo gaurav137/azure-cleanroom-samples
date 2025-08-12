@@ -1,0 +1,56 @@
+param(
+    [string]$persona = "$env:PERSONA",
+
+    [string]$samplesRoot = "/home/samples",
+    [string]$privateDir = "$samplesRoot/demo-resources/private",
+    [string]$publicDir = "$samplesRoot/demo-resources/public",
+
+    [string]$cgsClient = "azure-cleanroom-samples-governance-client-$persona",
+    [string]$operatorCgsClient = "azure-cleanroom-samples-governance-client-operator",
+
+    [string]$repo = "cleanroomemuprregistry.azurecr.io",
+    [string]$tag = "16749412789"
+)
+
+#https://learn.microsoft.com/en-us/powershell/scripting/learn/experimental-features?view=powershell-7.4#psnativecommanderroractionpreference
+$ErrorActionPreference = 'Stop'
+$PSNativeCommandUseErrorActionPreference = $true
+
+Import-Module $PSScriptRoot/../common/common.psm1
+
+$ccfEndpoint = (Get-Content "$publicDir/ccfEndpoint.json" | ConvertFrom-Json)
+Write-Log OperationStarted `
+    "Performing login as $persona to accept invitation..."
+
+#
+# Use AZCLI_ overrides till latest images are available in mcr.microsoft.com.
+#
+$envVarsClientDeploy = @{
+    "AZCLI_CGS_CLIENT_IMAGE" = "$repo/cgs-client:$tag"
+    "AZCLI_CGS_UI_IMAGE"     = "$repo/cgs-ui:$tag"
+}
+
+$cgsMsalTokenCacheDir = $env:HOST_PERSONA_PRIVATE_DIR + "/$cgsClient"
+# Deploy client-side containers to interact with the governance service as the new user.
+Start-Process az `
+    -ArgumentList "cleanroom governance client deploy --ccf-endpoint $($ccfEndpoint.url) --use-microsoft-identity --msal-token-cache-root-dir $privateDir --cgs-msal-token-cache-dir $cgsMsalTokenCacheDir --service-cert $publicDir/$($ccfEndpoint.serviceCert) --name $cgsClient" `
+    -Environment $envVarsClientDeploy `
+    -Wait
+
+# Accept the invitation and becomes an active member in the consortium.
+$invitationId = Get-Content "$publicDir/$persona.invitation-id"
+az cleanroom governance user-identity invitation accept `
+    --invitation-id $invitationId `
+    --governance-client $cgsClient
+
+Write-Log OperationStarted `
+    "Finalizing the invitation for $persona via $operatorCgsClient..."
+$proposalId = (az cleanroom governance user-identity add `
+        --accepted-invitation-id $invitationId `
+        --governance-client $operatorCgsClient `
+        --query "proposalId" `
+        --output tsv)
+az cleanroom governance proposal vote --proposal-id $proposalId --action accept --governance-client $operatorCgsClient
+
+Write-Log OperationCompleted `
+    "Invitation accepted and deployed CGS client '$cgsClient'."

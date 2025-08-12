@@ -205,7 +205,7 @@ The _operator_ (who is hosting the CCF instance) invites each user in the collab
 
 
 ```powershell
-./scripts/consortium/invite-user.ps1
+./scripts/consortium/invite-users.ps1
 ```
 
 > [!NOTE]
@@ -215,15 +215,6 @@ The _operator_ (who is hosting the CCF instance) invites each user in the collab
 > To add a user to the consortium, one of the existing members is required to create a proposal for addition of the member, and a quorum of members are required to accept the same.
 >
 > In the default sample flows, the _operator_ is the **only** active member of the consortium at the time of inviting the members, allowing a simplified flow where the _operator_ can propose and accept all the collaborators up front. Any additional/out of band member registrations at a later time would require all the **active** members at that point to accept the new member.
-
-<br>
-<details><summary><em>Azure CLI commands used</em></summary>
-<br>
-
-- `az cleanroom governance member add` - generate CCF proposal to add a member to the consortium.
-- `az cleanroom governance proposal vote` - accept/reject a CCF proposal.
-</details>
-<br>
 
 ## Accepting invitations (northwind, woodgrove)
 Once the collaborators have been added, they now need to accept their invitation before they can participate in the collaboration.

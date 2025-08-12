@@ -15,6 +15,6 @@ $PSNativeCommandUseErrorActionPreference = $true
 Import-Module $PSScriptRoot/../common/common.psm1
 
 # Share the email address to invite.
-$email | Out-File "$publicDir/$persona.user"
+$email | Out-File "$publicDir/$persona.email"
 Write-Log OperationCompleted `
-    "Shared email ID '$email' for '$persona' to '$publicDir/$persona.user'."
+    "Shared email ID '$email' for '$persona' to '$publicDir/$persona.email'."

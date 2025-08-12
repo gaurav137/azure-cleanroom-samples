@@ -154,6 +154,23 @@ $envVarsClientDeploy = @{
         -Wait
     az cleanroom governance member activate --governance-client $ccfOperatorClient
 
+    # Setting up Microsoft IDPs as trusted JWT token issuers for user identity.
+    Write-Log Verbose "Submitting set_ca_cert_bundle proposal for DigiCert Global Root CA"
+    az cleanroom governance proposal create `
+        --content "$PSScriptRoot/proposals/set_ca_cert_bundle/digicert_global_root_ca.json" `
+        --governance-client $ccfOperatorClient
+    
+    Write-Log Verbose "Submitting set_jwt_issuer proposal for sts.windows.net"
+    az cleanroom governance proposal create `
+        --content "$PSScriptRoot/proposals/set_jwt_issuer/sts.windows.net.json" `
+        --governance-client $ccfOperatorClient
+
+    Write-Log Verbose "Submitting set_jwt_issuer proposal for login.microsoftonline.com"
+    az cleanroom governance proposal create `
+        --content "$PSScriptRoot/proposals/set_jwt_issuer/login.microsoftonline.com.json" `
+        --governance-client $ccfOperatorClient
+
+
     # Configure the ccf provider client for the operator and open the network.
     Write-Log Verbose `
         "Opening CCF network '$ccfName'..."
