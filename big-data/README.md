@@ -21,7 +21,6 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
   - [Accepting invitations (northwind, woodgrove)](#accepting-invitations-northwind-woodgrove)
 - [Setting up the Cleanroom environment](#setting-up-the-cleanroom-environment)
   - [Create the cluster instance (operator)](#create-the-cluster-instance-operator)
-  - [Setting up log collection](#setting-up-log-collection)
 - [Publishing data](#publishing-data)
   - [KEK-DEK based encryption approach](#kek-dek-based-encryption-approach)
   - [Encrypt and upload data (northwind, woodgrove)](#encrypt-and-upload-data-northwind-woodgrove)
@@ -235,18 +234,14 @@ With the above steps the consortium creation that drives the creation and execut
 
 ## Create the cluster instance (operator)
 
-The _operator_ (who is hosting the cleanroom infra) brings up AKS cluster instance to run the Analytics workload (query). This cluster uses pods backed by Confidential ACI by executing this command:
+The _operator_ (who is hosting the cleanroom infra) brings up AKS cluster instance to run the Analytics workload (query). This cluster uses pods backed by Confidential ACI. Cluster creation is done by executing this command:
 
 ```powershell
-./scripts/consortium/start-cleanroom-cluster.ps1
+./scripts/cleanroom-cluster/start-cleanroom-cluster.ps1
 ```
 
 > [!NOTE]
 > In the default sample environment, the containers for all participants have their `/home/samples/demo-resources/public` mapped to a single host directory, so details about the cluster endpoint would be available to all parties automatically once generated. If the configuration has been changed, the CCF details needs to made available in `/home/samples/demo-resources/public` of each user before executing subsequent steps.
-
-## Setting up log collection
-
-TBD
 
 # Publishing data
 Sensitive data that any of the parties want to bring into the collaboration is ideally encrypted in a manner that ensures the key to decrypt this data will only be released to the clean room environment. This encryption is optional in case a collaborator does not want/use Client Side Encryption (CSE) for their data. This demo showcases this approach.

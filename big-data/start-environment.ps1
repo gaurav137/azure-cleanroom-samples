@@ -11,6 +11,7 @@ param(
 
     [string]$accessTokenProviderName = "$imageName-credential-proxy",
     [string]$ccfProviderName = "$imageName-ccf-provider",
+    [string]$cleanroomClusterProviderName = "$imageName-cluster-provider",
     [string]$telemetryDashboardName = "$imageName-telemetry",
     [string]$shellContainerName = "$imageName-shell-$persona",
 
@@ -54,6 +55,33 @@ function Get-Confirmation {
     } while ($response -ne $YesLabel.ToLower() -and $response -ne $NoLabel.ToLower())
 
     return ($response -eq $YesLabel.ToLower())
+}
+
+function Get-Digest {
+    [CmdletBinding()]
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$repo,
+
+        [Parameter(Mandatory = $true)]
+        [string]$containerName,
+
+        [Parameter(Mandatory = $true)]
+        [string]$tag
+    )
+
+    $manifest = oras manifest fetch $repo/"$containerName":$tag
+
+    $manifestRaw = ""
+    foreach ($line in $manifest) {
+        $manifestRaw += $line + "`n"
+    }
+    $shaGenerator = [System.Security.Cryptography.SHA256]::Create()
+    $manifestRaw = $manifestRaw.TrimEnd("`n")
+    $shaBytes = $shaGenerator.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestRaw))
+    $digest = ([System.BitConverter]::ToString($shaBytes) -replace '-').ToLowerInvariant()
+    $shaGenerator.Dispose()
+    return "sha256:$digest"
 }
 
 $hostBase = "$pwd/demo-resources"
@@ -153,6 +181,7 @@ if ($persona -eq "operator") {
         # Use AZCLI_ overrides till latest images are available in mcr.microsoft.com.
         #
         $envVars = @{
+            "CREDENTIAL_PROXY_ENDPOINT"                                        = $credentialProxyEndpoint
             "AZCLI_CCF_PROVIDER_CLIENT_IMAGE"                                  = "$repo/ccf/ccf-provider-client:$tag"
             "AZCLI_CCF_PROVIDER_PROXY_IMAGE"                                   = "$repo/ccr-proxy:$tag"
             "AZCLI_CCF_PROVIDER_ATTESTATION_IMAGE"                             = "$repo/ccr-attestation:$tag"
@@ -164,13 +193,45 @@ if ($persona -eq "operator") {
             "AZCLI_CCF_PROVIDER_CONTAINER_REGISTRY_URL"                        = "$repo"
             "AZCLI_CCF_PROVIDER_NETWORK_SECURITY_POLICY_DOCUMENT_URL"          = "$repo/policies/ccf/ccf-network-security-policy:$tag"
             "AZCLI_CCF_PROVIDER_RECOVERY_SERVICE_SECURITY_POLICY_DOCUMENT_URL" = "$repo/policies/ccf/ccf-recovery-service-security-policy:$tag"
-            "CREDENTIAL_PROXY_ENDPOINT"                                        = $credentialProxyEndpoint
         }
         Start-Process docker -ArgumentList "compose -p $ccfProviderName -f $dockerFileDir/ccf/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait
 
         $providerPort = (docker compose -p $ccfProviderName port "client" 8080).Split(':')[1]
         Write-Log OperationCompleted `
             "CCF provider deployed at 'http://localhost:$providerPort'."
+    }
+
+    & {
+        Write-Log OperationStarted `
+            "Setting up cleanroom cluster provider..."
+        #
+        # Use AZCLI_ overrides till latest images are available in mcr.microsoft.com.
+        #
+        $digest = Get-Digest -repo $repo -containerName "workloads/cleanroom-spark-analytics-app" -tag $tag
+        $envVars = @{
+            "CREDENTIAL_PROXY_ENDPOINT"                                                           = $credentialProxyEndpoint
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_CLIENT_IMAGE"                                       = "$repo/cleanroom-cluster/cleanroom-cluster-provider-client:$tag"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_PROXY_IMAGE"                                        = "$repo/ccr-proxy:$tag"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_ATTESTATION_IMAGE"                                  = "$repo/ccr-attestation:$tag"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_GOVERNANCE_IMAGE"                                   = "$repo/ccr-governance:$tag"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_SKR_IMAGE"                                          = "$repo/skr:$tag"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_CONTAINER_REGISTRY_URL"                             = "$repo"
+            "AZCLI_CLEANROOM_SIDECARS_POLICY_DOCUMENT_REGISTRY_URL"                               = "$repo"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_SPARK_ANALYTICS_AGENT_IMAGE"                        = "$repo/workloads/cleanroom-spark-analytics-agent:$tag"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_SPARK_ANALYTICS_AGENT_SECURITY_POLICY_DOCUMENT_URL" = "$repo/policies/workloads/cleanroom-spark-analytics-agent-security-policy:$tag"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_SPARK_ANALYTICS_AGENT_CHART_URL"                    = "$repo/workloads/helm/cleanroom-spark-analytics-agent:$semanticVersion"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_SPARK_FRONTEND_IMAGE"                               = "$repo/workloads/cleanroom-spark-frontend:$tag"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_SPARK_FRONTEND_SECURITY_POLICY_DOCUMENT_URL"        = "$repo/policies/workloads/cleanroom-spark-frontend-security-policy:$tag"
+            "AZCLI_CLEANROOM_CLUSTER_PROVIDER_SPARK_FRONTEND_CHART_URL"                           = "$repo/workloads/helm/cleanroom-spark-frontend:$semanticVersion"
+            "AZCLI_CLEANROOM_SIDECARS_VERSIONS_DOCUMENT_URL"                                      = "$repo/sidecar-digests:$tag"
+            "AZCLI_CLEANROOM_ANALYTICS_APP_IMAGE_URL"                                             = "$repo/workloads/cleanroom-spark-analytics-app@$digest"
+            "AZCLI_CLEANROOM_ANALYTICS_APP_IMAGE_POLICY_DOCUMENT_URL"                             = "$repo/policies/workloads/cleanroom-spark-analytics-app-security-policy:$tag"
+        }
+        Start-Process docker -ArgumentList "compose -p $cleanroomClusterProviderName -f $dockerFileDir/cleanroom-cluster/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait
+
+        $providerPort = (docker compose -p $cleanroomClusterProviderName port "client" 8080).Split(':')[1]
+        Write-Log OperationCompleted `
+            "Cleanroom cluster provider deployed at 'http://localhost:$providerPort'."
     }
 }
 
