@@ -271,9 +271,9 @@ sequenceDiagram
 ```
 
 > [!TIP]
-> Set a variable `$demo` to the name of the demo to be executed (_e.g., "**cleanroomhello-job**"_) - it is a required input for subsequent steps.
+> Set a variable `$demo` to the name of the demo to be executed (_e.g., "**analytics**"_) - it is a required input for subsequent steps.
 > ```powershell
-> $demo = # Set to one of: "cleanroomhello-job", "cleanroomhello-api", "analytics", "inference", "training"
+> $demo = # Set to one of: "analytics"
 > ```
 
 The following command initializes datastores and uploads encrypted datasets required for executing the samples:
