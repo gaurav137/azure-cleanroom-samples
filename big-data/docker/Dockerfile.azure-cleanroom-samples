@@ -48,6 +48,12 @@ RUN mv oras-install/oras /usr/local/bin/
 #RUN curl -L -o opa https://openpolicyagent.org/downloads/v0.70.0/opa_linux_amd64_static
 #RUN mv opa /usr/bin
 #RUN chmod 755 /usr/bin/opa
+# Install kubectl
+RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl" && \
+    chmod +x ./kubectl && \
+    mv ./kubectl /usr/local/bin/kubectl
+# Install pyjwt
+RUN pip3 install --upgrade pyjwt
 
 FROM samples-base AS install-extension-official
 # Install WHL from official source.

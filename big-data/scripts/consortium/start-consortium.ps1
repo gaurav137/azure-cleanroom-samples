@@ -106,13 +106,14 @@ if ($null -eq $ccf) {
 }]
 "@ | Out-File $privateDir/ccfMembers.json
 
+    $option = "cached-debug"
     Write-Log Verbose `
         "Creating CCF network '$ccfName' in '$resourceGroup'..."
     $ccf = (az cleanroom ccf network create `
             --name $ccfName `
             --node-count 1 `
             --node-log-level "Info" `
-            --security-policy-creation-option "allow-all" `
+            --security-policy-creation-option $option `
             --infra-type 'caci' `
             --members $privateDir/ccfMembers.json `
             --provider-config $privateDir/ccfProviderConfig.json `
@@ -193,9 +194,28 @@ $envVarsClientDeploy = @{
     #     --output tsv `
     #     --governance-client $ccfOperatorClient
     Write-Log OperationCompleted `
-        "Opened CCF network '$ccfName' ('$ccfUri') with default constituion" `
+        "Opened CCF network '$ccfName' ('$ccfUri') with default constitution" `
         "and initial member '$persona'."
 }
+
+$agentEndpoint = az cleanroom ccf network recovery-agent show `
+    --name $ccfName `
+    --provider-config $privateDir/ccfProviderConfig.json `
+    --provider-client $ccfProviderClient `
+    --query endpoint `
+    --output tsv
+$snpHostData = az cleanroom ccf network show-report `
+    --name $ccfName `
+    --provider-config $privateDir/ccfProviderConfig.json `
+    --provider-client $ccfProviderClient `
+    --query reports[0].hostData `
+    --output tsv
+@"
+{
+  "endpoint": "$agentEndpoint",
+  "snpHostData": "$snpHostData"
+}
+"@ | Out-File $publicDir/ccf.recovery-agent.json
 
 & {
     # Deploy client-side containers to interact with the governance service as the first member

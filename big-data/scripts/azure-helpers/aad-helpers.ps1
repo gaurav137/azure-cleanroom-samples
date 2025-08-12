@@ -26,7 +26,7 @@ function GetLoggedInEntityObjectId {
         # longer possible with device code.
         # Using manual workaround per https://github.com/Azure/azure-cli/issues/22776
         Write-Host "Extracting object ID from access token"
-        Write-Host "$(pip3 install --upgrade pyjwt)"
+        # pip3 install --upgrade pyjwt is done in Dockerfile.azure-cleanroom-samples.
         $objectId = (az account get-access-token --query accessToken --output tsv | `
                 tr -d '\n' | `
                 python3 -c "import jwt, sys; print(jwt.decode(sys.stdin.read(), algorithms=['RS256'], options={'verify_signature': False})['oid'])")

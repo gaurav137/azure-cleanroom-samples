@@ -84,6 +84,36 @@ function Get-Digest {
     return "sha256:$digest"
 }
 
+function Get-SemanticVersionFromTag {
+    param (
+        [string]$tag
+    )
+
+    # Check if the tag is in the format of x.y.z (with optional parts)
+    if ($tag -match '^\d+\.\d+\.\d+') {
+        $parts = $tag.Split('.')
+        $major = $parts[0]
+        $minor = $parts[1]
+        $patch = $parts[2]
+        $extra = ""
+        if ($parts.Count -eq 4) {
+            $extra = "-" + $parts[3]
+        }
+
+        return "$major.$minor.$patch$extra"
+    }
+    
+    # If not a version format, truncate to 8 characters and use as suffix
+    $truncatedTag = $tag
+    if ($tag.Length -gt 8) {
+        $truncatedTag = $tag.Substring(0, 8)
+    }
+    
+    # Return the formatted version. Add a "v" prefix below as $truncatedTag like 0207 gives
+    # error "Version segment starts with 0".
+    return "1.0.42-v$truncatedTag"
+}
+
 $hostBase = "$pwd/demo-resources"
 $sharedBase = "$hostBase/shared"
 $personaBase = "$hostBase/$persona"
@@ -208,6 +238,7 @@ if ($persona -eq "operator") {
         # Use AZCLI_ overrides till latest images are available in mcr.microsoft.com.
         #
         $digest = Get-Digest -repo $repo -containerName "workloads/cleanroom-spark-analytics-app" -tag $tag
+        $semanticVersion = Get-SemanticVersionFromTag $tag
         $envVars = @{
             "CREDENTIAL_PROXY_ENDPOINT"                                                           = $credentialProxyEndpoint
             "AZCLI_CLEANROOM_CLUSTER_PROVIDER_CLIENT_IMAGE"                                       = "$repo/cleanroom-cluster/cleanroom-cluster-provider-client:$tag"
@@ -273,7 +304,7 @@ if ($persona -eq "operator") {
             $dockerArgs += " --build-arg EXTENSION_SOURCE=local"
         }
         else {
-            $fileName = "cleanroom-1.0.40206-py2.py3-none-any"
+            $fileName = "cleanroom-1.0.88177-py2.py3-none-any"
             Write-Log Warning `
                 "Using custom az cli extension from: $repo/cli/cleanroom-whl:$tag and filename:$fileName ..."
             $dockerArgs += " --build-arg EXTENSION_REGISTRY=$repo/cli"
