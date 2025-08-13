@@ -46,7 +46,7 @@ if (Test-Path -Path $datasourcePath) {
     foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         Write-Log Verbose `
-            "Enumerated datasink '$datastoreName' in '$datasourcePath'..."
+            "Enumerated datasource '$datastoreName' in '$datasourcePath'..."
 
         az cleanroom datastore add `
             --name $datastoreName `
