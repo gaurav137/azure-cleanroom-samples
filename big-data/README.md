@@ -315,7 +315,7 @@ The managed identities created earlier as part of [publishing the data](#publish
 
 ## Adding datasets for collabaration (northwind, woodgrove)
 
-The following command adds details about the datastores to be accessed by the clean room and their mode (source/sink) to the contract fragment:
+The following command adds details about the datastores to be accessed by the clean room and their mode (source/sink) to the contract:
 
 
 ```powershell
