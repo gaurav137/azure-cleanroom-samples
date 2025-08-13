@@ -13,6 +13,9 @@ param(
     [string]$ccfEndpoint = "$publicDir/ccfEndpoint.json",
     [string]$contractId = "",
 
+    [string]$environmentConfig = "$privateDir/$resourceGroup.generated.json",
+    [string]$oidcContainerName = "az-cleanroom-samples-$resourceGroup-oidc",
+
     [string]$repo = "cleanroomemuprregistry.azurecr.io",
     [string]$tag = "16749412789"
 )
@@ -188,6 +191,112 @@ az cleanroom governance ca show `
     --governance-client $cgsClient `
     --query "caCert" `
     --output tsv > $publicDir/cleanroomca.crt
+
+Write-Output "Setting up OIDC issuer url endpoint..."
+
+#
+# Setup OIDC issuer endpoint.
+#
+$environmentConfigResult = Get-Content $environmentConfig | ConvertFrom-Json
+$issuerInfo = (az cleanroom governance oidc-issuer show `
+        --governance-client $cgsClient | ConvertFrom-Json)
+if ($null -ne $issuerInfo.issuerUrl) {
+    $issuerUrl = $issuerInfo.issuerUrl
+    Write-Log Warning `
+        "OIDC issuer already set for tenant to '$issuerUrl'. Skipping!"
+}
+else {
+    $oidcsa = $environmentConfigResult.oidcsa.name
+    if ($oidcsa -eq "cleanroomoidc") {
+        Write-Log Verbose `
+            "Use pre-provisioned storage account $oidcsa for OIDC setup"
+    }
+    else {
+
+        Write-Log Verbose `
+            "Setting up OIDC issuer using storage account '$oidcsa'..."
+
+        Write-Log Verbose `
+            "Setting up static website on storage account to setup oidc documents endpoint"
+        az storage blob service-properties update `
+            --account-name $oidcsa `
+            --static-website `
+            --404-document error.html `
+            --index-document index.html `
+            --auth-mode login
+    }
+
+    $objectId = GetLoggedInEntityObjectId
+    $role = "Storage Blob Data Contributor"
+    $roleAssignment = (az role assignment list `
+            --assignee-object-id $objectId `
+            --scope $environmentConfigResult.oidcsa.id `
+            --role $role `
+            --fill-principal-name false `
+            --fill-role-definition-name false) | ConvertFrom-Json
+
+    if ($roleAssignment.Length -eq 1) {
+        Write-Host "$role permission on the storage account already exists, skipping assignment"
+    }
+    else {
+        Write-Host "Assigning $role on the storage account"
+        az role assignment create `
+            --role $role `
+            --scope $environmentConfigResult.oidcsa.id `
+            --assignee-object-id $objectId `
+            --assignee-principal-type $(Get-Assignee-Principal-Type)
+    }
+
+    $webUrl = (az storage account show `
+            --name $oidcsa `
+            --query "primaryEndpoints.web" `
+            --output tsv)
+    Write-Host "Storage account static website URL: $webUrl"
+
+    Write-Log Verbose `
+        "Uploading openid-configuration to container '$oidcContainerName' in '$oidcsa'..." `
+        "$($PSStyle.Reset)"
+    @"
+{
+    "issuer": "$webUrl${oidcContainerName}",
+    "jwks_uri": "$webUrl${oidcContainerName}/openid/v1/jwks",
+    "response_types_supported": [
+        "id_token"
+    ],
+    "subject_types_supported": [
+        "public"
+    ],
+    "id_token_signing_alg_values_supported": [
+        "RS256"
+    ]
+}
+"@ | Out-File $privateDir/openid-configuration.json
+    az storage blob upload `
+        --container-name '$web' `
+        --file $privateDir/openid-configuration.json `
+        --name ${oidcContainerName}/.well-known/openid-configuration `
+        --account-name $oidcsa `
+        --overwrite `
+        --auth-mode login
+
+    Write-Log Verbose `
+        "Uploading jwks to container '$oidcContainerName' in '$oidcsa'..."
+    $url = "$ccfEndpointUrl/app/oidc/keys"
+    curl -sL -k $url | jq | Out-File $privateDir/jwks.json
+    az storage blob upload `
+        --container-name '$web' `
+        --file $privateDir/jwks.json `
+        --name ${oidcContainerName}/openid/v1/jwks `
+        --account-name $oidcsa `
+        --overwrite `
+        --auth-mode login
+
+    $issuerUrl = "$webUrl${oidcContainerName}"
+    Write-Log OperationCompleted `
+        "Set OIDC issuer to '$issuerUrl'."
+}
+
+$issuerUrl | Out-File $publicDir/issuer.url
 
 $option = "cached-debug"
 Write-Output "Generating deployment template/policy with $option creation option for analytics workload..."

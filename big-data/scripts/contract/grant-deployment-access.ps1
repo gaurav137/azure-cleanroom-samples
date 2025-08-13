@@ -1,10 +1,7 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("cleanroomhello-job", "cleanroomhello-api", "analytics", "inference", "training")]
+    [ValidateSet("analytics")]
     [string]$demo,
-
-    [Parameter(Mandatory = $true)]
-    [string]$contractId,
 
     [string]$persona = "$env:PERSONA",
     [string]$resourceGroup = "$env:RESOURCE_GROUP",
@@ -13,8 +10,6 @@ param(
     [string]$publicDir = "$samplesRoot/demo-resources/public",
     [string]$privateDir = "$samplesRoot/demo-resources/private",
     [string]$secretDir = "$samplesRoot/demo-resources/secret",
-
-    [string]$oidcContainerName = "cgs-oidc",
 
     [string]$secretstoreConfig = "$privateDir/secretstores.config",
     [string]$datastoreConfig = "$privateDir/datastores.config",
@@ -31,6 +26,8 @@ Import-Module $PSScriptRoot/../common/common.psm1
 Import-Module $PSScriptRoot/../azure-helpers/azure-helpers.psm1 -Force -DisableNameChecking
 
 Test-AzureAccessToken
+
+$contractId = Get-Content $publicDir/analytics.contract-id
 
 Write-Log OperationStarted `
     "Granting access to resources required for '$demo' demo to deployments implementing" `
@@ -64,7 +61,6 @@ az role assignment create `
     --scope $environmentConfigResult.datasa.id `
     --assignee-object-id $managedIdentity.principalId `
     --assignee-principal-type ServicePrincipal
-CheckLastExitCode
 
 # KEK vault access.
 $kekVault = $environmentConfigResult.kek.kv
@@ -90,7 +86,6 @@ if ($kekVault.type -eq "Microsoft.KeyVault/managedHSMs") {
             --assignee-object-id $managedIdentity.principalId `
             --hsm-name $kekVault.name `
             --assignee-principal-type ServicePrincipal
-        CheckLastExitCode
     }
 }
 elseif ($kekVault.type -eq "Microsoft.KeyVault/vaults") {
@@ -114,7 +109,6 @@ elseif ($kekVault.type -eq "Microsoft.KeyVault/vaults") {
             --scope $kekVault.id `
             --assignee-object-id $managedIdentity.principalId `
             --assignee-principal-type ServicePrincipal
-        CheckLastExitCode
     }
 }
 
@@ -129,90 +123,6 @@ az role assignment create `
     --scope $dekVault.id `
     --assignee-object-id $managedIdentity.principalId `
     --assignee-principal-type ServicePrincipal
-CheckLastExitCode
-
-#
-# Setup OIDC issuer for tenant.
-#
-$tenantId = az account show --query "tenantId" --output tsv
-$tenantData = (az cleanroom governance oidc-issuer show `
-        --governance-client $cgsClient `
-        --query "tenantData" | ConvertFrom-Json)
-if ($null -ne $tenantData -and $tenantData.tenantId -eq $tenantId) {
-    $issuerUrl = $tenantData.issuerUrl
-    Write-Log Warning `
-        "OIDC issuer already set for tenant '$tenantId' to '$issuerUrl'. Skipping!"
-}
-else {
-    $oidcsa = $environmentConfigResult.oidcsa.name
-    Write-Log Verbose `
-        "Setting up OIDC issuer for tenant '$tenantId' using storage account '$oidcsa'..."
-
-    Write-Log Verbose `
-        "Creating public access blob container '$oidcContainerName' in '$oidcsa'..."
-    az storage container create `
-        --name $oidcContainerName `
-        --account-name $oidcsa `
-        --public-access blob `
-        --auth-mode login
-    CheckLastExitCode
-    Write-Log OperationCompleted `
-        "Created public access blob container '$oidcContainerName' in '$oidcsa'."
-
-    Write-Log Verbose `
-        "Uploading openid-configuration to container '$oidcContainerName' in '$oidcsa'..." `
-        "$($PSStyle.Reset)"
-    @"
-{
-"issuer": "https://$oidcsa.blob.core.windows.net/$oidcContainerName",
-"jwks_uri": "https://$oidcsa.blob.core.windows.net/$oidcContainerName/openid/v1/jwks",
-"response_types_supported": [
-"id_token"
-],
-"subject_types_supported": [
-"public"
-],
-"id_token_signing_alg_values_supported": [
-"RS256"
-]
-}
-"@ | Out-File $privateDir/openid-configuration.json
-    az storage blob upload `
-        --container-name $oidcContainerName `
-        --file $privateDir/openid-configuration.json `
-        --name .well-known/openid-configuration `
-        --account-name $oidcsa `
-        --overwrite `
-        --auth-mode login
-    CheckLastExitCode
-
-    Write-Log Verbose `
-        "Uploading jwks to container '$oidcContainerName' in '$oidcsa'..."
-    $ccfEndpoint = (Get-Content "$publicDir/ccfEndpoint.json" | ConvertFrom-Json)
-    $url = "$($ccfEndpoint.url)/app/oidc/keys"
-    curl -sL -k $url | jq | Out-File $privateDir/jwks.json
-    az storage blob upload `
-        --container-name $oidcContainerName `
-        --file $privateDir/jwks.json `
-        --name openid/v1/jwks `
-        --account-name $oidcsa `
-        --overwrite `
-        --auth-mode login
-    CheckLastExitCode
-
-    Write-Log Verbose `
-        "Setting OIDC issuer for tenant '$tenantId'..."
-    az cleanroom governance oidc-issuer set-issuer-url `
-        --governance-client $cgsClient `
-        --url "https://$oidcsa.blob.core.windows.net/$oidcContainerName"
-    $tenantData = (az cleanroom governance oidc-issuer show `
-            --governance-client $cgsClient `
-            --query "tenantData" | ConvertFrom-Json)
-    $issuerUrl = $tenantData.issuerUrl
-
-    Write-Log OperationCompleted `
-        "Set OIDC issuer for tenant '$tenantId' to '$issuerUrl'."
-}
 
 #
 # Setup federated credential on managed identity.

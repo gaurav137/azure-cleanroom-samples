@@ -54,6 +54,7 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
     mv ./kubectl /usr/local/bin/kubectl
 # Install pyjwt
 RUN pip3 install --upgrade pyjwt
+RUN apt-get install -y nano
 
 FROM samples-base AS install-extension-official
 # Install WHL from official source.

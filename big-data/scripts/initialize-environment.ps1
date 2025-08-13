@@ -181,26 +181,29 @@ else {
 #   a) Collaborators to authenticate data sets access.
 #   b) To authenticate telemetry access.
 #
-if ($isCollaborator) {
-    if ($null -ne $overrides['$OIDC_STORAGE_ACCOUNT_NAME']) {
+if ($isOperator) {
+    if ($overrides['$OIDC_STORAGE_ACCOUNT_NAME'] -eq "cleanroomoidc") {
         $oidcStorageAccount = $overrides['$OIDC_STORAGE_ACCOUNT_NAME']
         $oidcRG = $overrides['$OIDC_STORAGE_ACCOUNT_RESOURCE_GROUP']
+        Write-Log Warning `
+            "Skipped creation of pre-configured OIDC storage account  '$oidcStorageAccount'."
         $result.oidcsa = (az storage account show --name $oidcStorageAccount --resource-group $oidcRG) | ConvertFrom-Json
     }
-    else {
-        
+    else {     
         $oidcStorageAccount = $($overrides['$OIDC_STORAGE_ACCOUNT_NAME'] ?? "oidcsa${uniqueString}")
         $oidcRG = $($overrides['$OIDC_STORAGE_ACCOUNT_RESOURCE_GROUP'] ?? "${resourceGroup}")
         $result.oidcsa = Create-Storage-Resources `
             -resourceGroup $oidcRG `
             -storageAccountName @($oidcStorageAccount) `
             -objectId $objectId
-        az storage account update `
-            --name $oidcStorageAccount `
-            --resource-group $oidcRG `
-            --allow-blob-public-access true
+        az storage blob service-properties update `
+            --account-name $result.oidcsa.name `
+            --static-website `
+            --404-document error.html `
+            --index-document index.html `
+            --auth-mode login
         Write-Log OperationCompleted `
-            "Enabled public blob access for '$oidcStorageAccount'."
+            "Enabled static website for '$oidcStorageAccount'."
     }
 }
 else {

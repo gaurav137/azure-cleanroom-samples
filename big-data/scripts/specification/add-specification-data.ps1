@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("cleanroomhello-job", "cleanroomhello-api", "analytics", "inference", "training")]
+    [ValidateSet("analytics")]
     [string]$demo,
 
     [string]$persona = "$env:PERSONA",
@@ -32,11 +32,9 @@ Write-Log OperationStarted `
     "Adding datasources and datasinks for '$persona' in the '$demo' demo to" `
     "'$($contractConfigResult.contractFragment)'..."
 
-if (Test-Path -Path $datasourcePath)
-{
+if (Test-Path -Path $datasourcePath) {
     $dirs = Get-ChildItem -Path $datasourcePath -Directory -Name
-    foreach ($dir in $dirs)
-    {
+    foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasourceName = "$persona-$dir".ToLower()
         az cleanroom config add-datasource `
@@ -53,17 +51,14 @@ if (Test-Path -Path $datasourcePath)
             "Added datasource '$datasourceName' ($datastoreName)."
     }
 }
-else
-{
+else {
     Write-Log Warning `
         "No datasource required for persona '$persona' in demo '$demo'."
 }
 
-if (Test-Path -Path $datasinkPath)
-{
+if (Test-Path -Path $datasinkPath) {
     $dirs = Get-ChildItem -Path $datasinkPath -Directory -Name
-    foreach ($dir in $dirs)
-    {
+    foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasinkName = "$persona-$dir".ToLower()
         az cleanroom config add-datasink `
@@ -80,8 +75,7 @@ if (Test-Path -Path $datasinkPath)
             "Added datasink '$datasinkName' ($datastoreName)."
     }
 }
-else
-{
+else {
     Write-Log Warning `
         "No datasink required for persona '$persona' in demo '$demo'."
 }

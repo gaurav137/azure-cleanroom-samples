@@ -25,7 +25,6 @@ function GetLoggedInEntityObjectId {
         # accessing Microsoft Graph with device code (#22629), querying Microsoft Graph API is no
         # longer possible with device code.
         # Using manual workaround per https://github.com/Azure/azure-cli/issues/22776
-        Write-Host "Extracting object ID from access token"
         # pip3 install --upgrade pyjwt is done in Dockerfile.azure-cleanroom-samples.
         $objectId = (az account get-access-token --query accessToken --output tsv | `
                 tr -d '\n' | `

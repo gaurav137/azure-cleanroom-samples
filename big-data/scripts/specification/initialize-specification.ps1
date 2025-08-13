@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("cleanroomhello-job", "cleanroomhello-api", "analytics", "inference", "training")]
+    [ValidateSet("analytics")]
     [string]$demo,
 
     [string]$persona = "$env:PERSONA",
@@ -30,8 +30,7 @@ Write-Log OperationStarted `
 az cleanroom config init `
     --cleanroom-config $contractFragment
 
-if ($managedIdentityName -eq "")
-{
+if ($managedIdentityName -eq "") {
     $uniqueString = Get-UniqueString($resourceGroup)
     $managedIdentityName = "${uniqueString}-mi-$demo"
 }
@@ -39,8 +38,8 @@ if ($managedIdentityName -eq "")
 Write-Log OperationStarted `
     "Creating managed identity '$managedIdentityName' in resource group '$resourceGroup'..."
 $mi = (az identity create `
-    --name $managedIdentityName `
-    --resource-group $resourceGroup) | ConvertFrom-Json
+        --name $managedIdentityName `
+        --resource-group $resourceGroup) | ConvertFrom-Json
 az cleanroom config add-identity az-federated `
     --cleanroom-config $contractFragment `
     -n "$persona-identity" `
@@ -52,7 +51,7 @@ Write-Log OperationCompleted `
 
 $configResult = @{
     contractFragment = ""
-    mi         = @{}
+    mi               = @{}
 }
 $configResult.contractFragment = $contractFragment
 $configResult.mi = $mi

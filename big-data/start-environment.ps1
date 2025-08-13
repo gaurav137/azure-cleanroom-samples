@@ -323,6 +323,7 @@ if ($persona -eq "operator") {
             --env RESOURCE_GROUP_LOCATION=$resourceGroupLocation `
             --env IDENTITY_ENDPOINT=$credentialProxyEndpoint `
             --env IDENTITY_HEADER="dummy_required_value" `
+            --env HOST_PERSONA_PRIVATE_DIR=$personaBase/$($privateDir) `
             -v "//var/run/docker.sock:/var/run/docker.sock" `
             -v "$($sharedBase):$virtualBase" `
             -v "$personaBase/$($privateDir):$virtualBase/$privateDir" `

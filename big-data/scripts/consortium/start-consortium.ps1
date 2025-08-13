@@ -166,9 +166,9 @@ $envVarsClientDeploy = @{
         --content "$PSScriptRoot/proposals/set_jwt_issuer/sts.windows.net.json" `
         --governance-client $ccfOperatorClient
 
-    Write-Log Verbose "Submitting set_jwt_issuer proposal for login.microsoftonline.com"
+    Write-Log Verbose "Submitting set_jwt_issuer proposal for login.microsoftonline.com (no auto-refresh)"
     az cleanroom governance proposal create `
-        --content "$PSScriptRoot/proposals/set_jwt_issuer/login.microsoftonline.com.json" `
+        --content "$PSScriptRoot/proposals/set_jwt_issuer/auto_refresh_false/login.microsoftonline.com.json" `
         --governance-client $ccfOperatorClient
 
 

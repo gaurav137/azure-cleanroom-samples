@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("cleanroomhello-job", "cleanroomhello-api", "analytics", "inference", "training")]
+    [ValidateSet("analytics")]
     [string]$demo,
 
     [string]$persona = "$env:PERSONA",
@@ -29,25 +29,21 @@ Import-Module $PSScriptRoot/../common/common.psm1
 
 Test-AzureAccessToken
 
-if ($sa -eq "")
-{
+if ($sa -eq "") {
     $initResult = Get-Content $environmentConfig | ConvertFrom-Json
     $sa = $initResult.datasa.id
 }
 
-if (Test-Path -Path "$demoPath/generate-data.ps1")
-{
+if (Test-Path -Path "$demoPath/generate-data.ps1") {
     & $demoPath/generate-data.ps1
 }
 
 Write-Log OperationStarted `
     "Creating data stores for '$demo' demo in '$sa'..."
 
-if (Test-Path -Path $datasourcePath)
-{
+if (Test-Path -Path $datasourcePath) {
     $dirs = Get-ChildItem -Path $datasourcePath -Directory -Name
-    foreach ($dir in $dirs)
-    {
+    foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         Write-Log Verbose `
             "Enumerated datasink '$datastoreName' in '$datasourcePath'..."
@@ -74,17 +70,14 @@ if (Test-Path -Path $datasourcePath)
             "Published data from '$datasourcePath/$dir' as data store '$datastoreName'."
     }
 }
-else
-{
+else {
     Write-Log Warning `
         "No datasource available for persona '$persona' in demo '$demo'."
 }
 
-if (Test-Path -Path $datasinkPath)
-{
+if (Test-Path -Path $datasinkPath) {
     $dirs = Get-ChildItem -Path $datasinkPath -Directory -Name
-    foreach ($dir in $dirs)
-    {
+    foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         Write-Log Verbose `
             "Enumerated datasink '$datastoreName' in '$datasinkPath'..."
@@ -103,8 +96,10 @@ if (Test-Path -Path $datasinkPath)
             "Created data store '$datastoreName' backed by '$sa'."
     }
 }
-else
-{
+else {
     Write-Log Warning `
         "No datasink available for persona '$persona' in demo '$demo'."
 }
+
+pwsh $PSScriptRoot/../specification/initialize-specification.ps1 -demo $demo
+pwsh $PSScriptRoot/../specification/add-specification-data.ps1 -demo $demo
