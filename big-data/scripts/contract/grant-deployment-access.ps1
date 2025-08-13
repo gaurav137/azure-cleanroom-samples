@@ -53,14 +53,27 @@ $managedIdentity = $contractConfigResult.mi
 
 # Cleanroom needs both read/write permissions on storage account, hence assigning Storage Blob Data Contributor.
 $role = "Storage Blob Data Contributor"
-Write-Log Verbose `
-    "Assigning permission for '$role' to '$($managedIdentity.name)' on" `
-    "storage account '$($environmentConfigResult.datasa.name)'"
-az role assignment create `
-    --role "Storage Blob Data Contributor" `
-    --scope $environmentConfigResult.datasa.id `
-    --assignee-object-id $managedIdentity.principalId `
-    --assignee-principal-type ServicePrincipal
+$roleAssignment = (az role assignment list `
+        --assignee-object-id $managedIdentity.principalId `
+        --scope $environmentConfigResult.datasa.id `
+        --role $role `
+        --fill-principal-name false `
+        --fill-role-definition-name false) | ConvertFrom-Json
+if ($roleAssignment.Length -eq 1) {
+    Write-Log Warning `
+        "Skipping assignment as '$role' permission already exists for" `
+        "'$($managedIdentity.name)' on storage account '$($environmentConfigResult.datasa.name)'."
+}
+else {
+    Write-Log Verbose `
+        "Assigning permission for '$role' to '$($managedIdentity.name)' on" `
+        "storage account '$($environmentConfigResult.datasa.name)'"
+    az role assignment create `
+        --role $role `
+        --scope $environmentConfigResult.datasa.id `
+        --assignee-object-id $managedIdentity.principalId `
+        --assignee-principal-type ServicePrincipal
+}
 
 # KEK vault access.
 $kekVault = $environmentConfigResult.kek.kv
@@ -92,9 +105,11 @@ elseif ($kekVault.type -eq "Microsoft.KeyVault/vaults") {
     $role = "Key Vault Crypto Officer"
 
     $roleAssignment = (az role assignment list `
-            --assignee $managedIdentity.principalId `
+            --assignee-object-id $managedIdentity.principalId `
             --scope $kekVault.id `
-            --role $role) | ConvertFrom-Json
+            --role $role `
+            --fill-principal-name false `
+            --fill-role-definition-name false) | ConvertFrom-Json
     if ($roleAssignment.Length -eq 1) {
         Write-Log Warning `
             "Skipping assignment as '$role' permission already exists for" `
@@ -115,27 +130,43 @@ elseif ($kekVault.type -eq "Microsoft.KeyVault/vaults") {
 # DEK vault access.
 $dekVault = $environmentConfigResult.dek.kv
 $role = "Key Vault Secrets User"
-Write-Log Verbose `
-    "Assigning permission for '$role' to '$($managedIdentity.name)' on" `
-    "storage account '$($dekVault.name)'"
-az role assignment create `
-    --role $role `
-    --scope $dekVault.id `
-    --assignee-object-id $managedIdentity.principalId `
-    --assignee-principal-type ServicePrincipal
+$roleAssignment = (az role assignment list `
+        --assignee-object-id $managedIdentity.principalId `
+        --scope $dekVault.id `
+        --role $role `
+        --fill-principal-name false `
+        --fill-role-definition-name false) | ConvertFrom-Json
+if ($roleAssignment.Length -eq 1) {
+    Write-Log Warning `
+        "Skipping assignment as '$role' permission already exists for" `
+        "'$($managedIdentity.name)' on key vault '$($dekVault.name)'."
+}
+else {
+    Write-Log Verbose `
+        "Assigning permission for '$role' to '$($managedIdentity.name)' on" `
+        "storage account '$($dekVault.name)'"
+    az role assignment create `
+        --role $role `
+        --scope $dekVault.id `
+        --assignee-object-id $managedIdentity.principalId `
+        --assignee-principal-type ServicePrincipal
+}
 
 #
 # Setup federated credential on managed identity.
 #
+$issuerUrl = Get-Content $publicDir/issuer.url
+$userId = az cleanroom governance client show --name $cgsClient --query userTokenClaims.oid -o tsv
+$subject = $contractId + "-" + $userId
 Write-Log OperationStarted `
     "Setting up federation on managed identity '$($managedIdentity.name)' for" `
-    "issuer '$issuerUrl' and subject '$contractId'..."
+    "issuer '$issuerUrl' and subject '$subject'..."
 az identity federated-credential create `
-    --name "$contractId-federation" `
+    --name "$subject-federation" `
     --identity-name $managedIdentity.name `
     --resource-group $resourceGroup `
     --issuer $issuerUrl `
-    --subject $contractId
+    --subject $subject
 
 # See Note at https://learn.microsoft.com/en-us/azure/aks/workload-identity-deploy-cluster#create-the-federated-identity-credential
 $sleepTime = 30
