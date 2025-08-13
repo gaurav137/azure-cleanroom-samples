@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("litware", "fabrikam", "contosso", "client", "operator")]
+    [ValidateSet("litware", "fabrikam", "contosso", "client", "operator", IgnoreCase = $false)]
     [string]$persona,
 
     [string]$resourceGroup = "",
@@ -13,6 +13,7 @@ param(
     [string]$ccfProviderName = "$imageName-ccf-provider",
     [string]$telemetryDashboardName = "$imageName-telemetry",
     [string]$shellContainerName = "$imageName-shell-$persona",
+    [string]$preProvisionedOIDCStorageAccount = "",
 
     [switch]$overwrite,
     [switch]$shareCredentials
@@ -236,7 +237,9 @@ if ($persona -eq "operator")
             --env PERSONA=$persona `
             --env RESOURCE_GROUP=$resourceGroup `
             --env RESOURCE_GROUP_LOCATION=$resourceGroupLocation `
-            --env MSI_ENDPOINT=$credentialProxyEndpoint `
+            --env PREPROVISIONED_OIDC_STORAGEACCOUNT=$preProvisionedOIDCStorageAccount `
+            --env IDENTITY_ENDPOINT=$credentialProxyEndpoint `
+            --env IDENTITY_HEADER="dummy_required_value" `
             -v "//var/run/docker.sock:/var/run/docker.sock" `
             -v "$($sharedBase):$virtualBase" `
             -v "$personaBase/$($privateDir):$virtualBase/$privateDir" `

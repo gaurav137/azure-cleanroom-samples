@@ -17,7 +17,8 @@ param(
 
     [string]$environmentConfig = "$privateDir/$resourceGroup.generated.json",
     [string]$secretstoreConfig = "$privateDir/secretstores.config",
-    [string]$localSecretStore = "$secretDir/$persona-local-store"
+    [string]$localSecretStore = "$secretDir/$persona-local-store",
+    [string]$preProvisionedOIDCStorageAccount = "$env:PREPROVISIONED_OIDC_STORAGEACCOUNT"
 )
 
 #https://learn.microsoft.com/en-us/powershell/scripting/learn/experimental-features?view=powershell-7.4#psnativecommanderroractionpreference
@@ -73,6 +74,18 @@ az provider register -n 'Microsoft.ContainerInstance'
 az provider register -n 'Microsoft.ContainerRegistry'
 az provider register -n 'Microsoft.KeyVault'
 az provider register -n 'Microsoft.ManagedIdentity'
+
+$currentUser = (az account show) | ConvertFrom-Json
+$tenantId = $currentUser.tenantid
+
+# for MSFT tenant 72f988bf-86f1-41af-91ab-2d7cd011db47 we must a use pre-provisioned whitelisted storage account
+if ($tenantId -eq "72f988bf-86f1-41af-91ab-2d7cd011db47" -and $preProvisionedOIDCStorageAccount -eq "")
+{
+    Write-Log Error "No pre-provisioned OIDC storage account provided for MSFT tenant. Please set the " `
+        "`preProvisionedOIDCStorageAccount` parameter in the start-environment.ps1 " `
+        "to the name of a pre-provisioned storage account."
+    throw "No pre-provisioned OIDC storage account provided for MSFT tenant."
+}
 
 #
 # Create secure key stores for:
@@ -180,17 +193,40 @@ else
 #
 if ($isCollaborator -or $isDeveloper)
 {
-    $oidcStorageAccount = $($overrides['$OIDC_STORAGE_ACCOUNT_NAME'] ?? "oidcsa${uniqueString}")
-    $result.oidcsa = Create-Storage-Resources `
-        -resourceGroup $resourceGroup `
-        -storageAccountName @($oidcStorageAccount) `
-        -objectId $objectId
-    az storage account update `
-        --name $oidcStorageAccount `
-        --resource-group $resourceGroup `
-        --allow-blob-public-access true
-    Write-Log OperationCompleted `
-        "Enabled public blob access for '$oidcStorageAccount'."
+    $oidcStorageAccount = ""
+    if ($preProvisionedOIDCStorageAccount -ne "")
+    {
+        $oidcStorageAccount = $preProvisionedOIDCStorageAccount
+        Write-Log Verbose `
+            "Using pre-provisioned OIDC storage account '$oidcStorageAccount' for MSFT tenant."
+
+        $status = (az storage blob service-properties show `
+            --account-name $oidcStorageAccount `
+            --auth-mode login `
+            --query "staticWebsite.enabled" `
+            --output tsv)
+        if ($status -ne "true") {
+          throw "Preprovisioned storage account $oidcStorageAccount should have static website enabled."
+        }
+
+        $result.oidcsa = (az storage account show --name $oidcStorageAccount) | ConvertFrom-Json
+    }
+    else
+    {
+        $oidcStorageAccount = $($overrides['$OIDC_STORAGE_ACCOUNT_NAME'] ?? "oidcsa${uniqueString}")
+        $result.oidcsa = Create-Storage-Resources `
+            -resourceGroup $resourceGroup `
+            -storageAccountName @($oidcStorageAccount) `
+            -objectId $objectId
+
+        Write-Host "Setting up static website on storage account to setup oidc documents endpoint"
+        az storage blob service-properties update `
+        --account-name $oidcStorageAccount `
+        --static-website `
+        --404-document error.html `
+        --index-document index.html `
+        --auth-mode login
+    }
 }
 else
 {
