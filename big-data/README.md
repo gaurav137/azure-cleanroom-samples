@@ -331,7 +331,7 @@ From a confidentiality perspective, the query document creation and proposal can
 The party interested in getting the query results (*woodgrove* in our case) can do so by running the following:
 
 ```powershell
-./scripts/cleanroom/run-query.ps1
+./scripts/contract/run-query.ps1
 ```
 Note: for *client* to run the query it needs to be added as a user that does not publish any dataset or perform any query approval.
 

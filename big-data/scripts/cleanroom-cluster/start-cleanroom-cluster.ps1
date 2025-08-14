@@ -96,7 +96,10 @@ $response = az cleanroom cluster show `
     --provider-client $clusterProviderClient
 $response | Out-File $privateDir/cl-cluster.json
 
-$kubeConfig = "${privateDir}/k8s-credentials.yaml"
+#
+# Note: For samples/demo purposes the kubeconfig is written out to the public directory. In production this will not be public information.
+#
+$kubeConfig = "${publicDir}/k8s-credentials.yaml"
 az cleanroom cluster get-kubeconfig `
     --name $clusterName `
     --provider-config $privateDir/providerConfig.json `
