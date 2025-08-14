@@ -45,6 +45,7 @@ az cleanroom config add-identity az-federated `
     -n "$persona-identity" `
     --client-id $mi.clientId `
     --tenant-id $mi.tenantId `
+    --issuer-url $(Get-Content $publicDir/issuer.url) `
     --backing-identity cleanroom_cgs_oidc
 Write-Log OperationCompleted `
     "Added identity '$persona-identity' backed by '$managedIdentityName'."

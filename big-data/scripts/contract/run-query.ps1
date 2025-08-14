@@ -28,7 +28,7 @@ function Invoke-SqlJobAndWait {
         [string]$analyticsEndpoint
     )
 
-    $token = (az cleanroom governance client get-access-token --query accessToken -o tsv --governance-client $cgsClient)
+    $token = (az cleanroom governance client get-access-token --query accessToken -o tsv --name $cgsClient)
     $script:submissionJson = $null
     & {
         # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
@@ -62,7 +62,7 @@ function Invoke-SqlJobAndWait {
     do {
         Write-Host "$(Get-TimeStamp) Checking status of job: $jobId"
 
-        $token = (az cleanroom governance client get-access-token --query accessToken -o tsv --governance-client $cgsClient)
+        $token = (az cleanroom governance client get-access-token --query accessToken -o tsv --name $cgsClient)
         $script:jobStatusResponse = ""
         & {
             # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
@@ -102,6 +102,9 @@ function Invoke-SqlJobAndWait {
 $queryDocumentId = Get-Content $publicDir/analytics.query-id
 
 $kubeConfig = "$publicDir/k8s-credentials.yaml"
+if (-not (Test-Path -Path $kubeConfig)) {
+    throw "$kubeConfig was not found."
+}
 Get-Job -Command "*kubectl proxy --port 8181*" | Stop-Job
 Get-Job -Command "*kubectl proxy --port 8181*" | Remove-Job
 kubectl proxy --port 8181 --kubeconfig $kubeConfig &

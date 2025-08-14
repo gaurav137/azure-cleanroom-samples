@@ -309,7 +309,7 @@ if ($persona -eq "operator") {
             $dockerArgs += " --build-arg EXTENSION_SOURCE=local"
         }
         else {
-            $fileName = "cleanroom-1.0.88177-py2.py3-none-any"
+            $fileName = "cleanroom-1.0.47256-py2.py3-none-any"
             Write-Log Warning `
                 "Using custom az cli extension from: $repo/cli/cleanroom-whl:$tag and filename:$fileName ..."
             $dockerArgs += " --build-arg EXTENSION_REGISTRY=$repo/cli"
