@@ -55,6 +55,8 @@ RUN curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/s
 # Install pyjwt
 RUN pip3 install --upgrade pyjwt
 RUN apt-get install -y nano
+# Install PowerShell-Yaml
+RUN pwsh -c "Set-PSRepository -Name PSGallery -InstallationPolicy Trusted; Install-Module powershell-yaml -Scope CurrentUser"
 
 FROM samples-base AS install-extension-official
 # Install WHL from official source.

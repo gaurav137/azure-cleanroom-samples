@@ -34,8 +34,30 @@ Write-Log OperationStarted `
 foreach ($handle in $handles) {
     Write-Log Verbose `
         "Downloading data for '$handle'..."
-    curl -L "$src/$handle.csv" -o "$dataDir/$handle.csv"
+    curl -s -L "$src/$handle.csv" -o "$dataDir/$handle.csv"
 }
 
 Write-Log OperationCompleted `
     "Downloaded data for '$persona' in '$demo' demo to '$dataDir'."
+
+$inputSchema = [ordered]@{
+    "date"     = @{ "type" = "date" }
+    "time"     = @{ "type" = "string" }
+    "author"   = @{"type" = "string" }
+    "mentions" = @{ "type" = "string" }
+}
+$inputSchema | ConvertTo-Json -Depth 100 | Out-File $dataDir/schema.json
+
+Write-Log OperationCompleted `
+    "Created input schema.json file in '$dataDir'."
+
+if ("woodgrove" -eq $persona) {
+    $outputDir = "$PSScriptRoot/datasink/$persona/output"
+    $outputSchema = [ordered]@{
+        "author"             = @{ "type" = "string" }
+        "Number_Of_Mentions" = @{ "type" = "integer" }
+    }
+    $outputSchema | ConvertTo-Json -Depth 100 | Out-File $outputDir/schema.json
+    Write-Log OperationCompleted `
+        "Created output schema.json file in '$outputDir'."
+}

@@ -70,6 +70,11 @@ function Get-Digest {
         [string]$tag
     )
 
+    # Explicit login required for registry below for oras manifest fetch to work.
+    $cleanroomPrRegistry = "cleanroomemuprregistry"
+    if ($repo.StartsWith($cleanroomPrRegistry)) {
+        az acr login --name $cleanroomPrRegistry
+    }
     $manifest = oras manifest fetch $repo/"$containerName":$tag
 
     $manifestRaw = ""

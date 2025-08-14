@@ -24,7 +24,6 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
   - [KEK-DEK based encryption approach](#kek-dek-based-encryption-approach)
   - [Encrypt and upload data (northwind, woodgrove)](#encrypt-and-upload-data-northwind-woodgrove)
   - [Configure resource access for clean room (northwind, woodgrove)](#configure-resource-access-for-clean-room-northwind-woodgrove)
-  - [Adding datasets for collabaration (northwind, woodgrove)](#adding-datasets-for-collabaration-northwind-woodgrove)
 - [Setting up query execution](#setting-up-query-execution)
   - [Adding query to execute in the collaboration (woodgrove)](#adding-query-to-execute-in-the-collaboration-woodgrove)
   - [Agreeing upon the query for execution (northwind, woodgrove)](#agreeing-upon-the-query-for-execution-northwind-woodgrove)
@@ -219,7 +218,7 @@ The _operator_ (who is hosting the CCF instance) invites each user in the collab
 Once the collaborators have been added, they now need to accept their invitation before they can participate in the collaboration.
 
 ```powershell
-./scripts/consortium/confirm-user.ps1
+./scripts/consortium/accept-invitation.ps1
 ```
 
 With the above steps the consortium creation that drives the creation and execution of the clean room is complete. We now proceed to preparing the datasets and making them available in the clean room.
@@ -276,6 +275,12 @@ The following command initializes datastores and uploads encrypted datasets requ
 > [!NOTE]
 > The samples currently use server-side encryption for all data sets. However the clean room infrastructure supports client side encryption as well, and client side encryption is the recommended encryption mode as it offers a higher level of confidentiality.
 
+> [!TIP]
+> <a name="MountPoints"></a>
+> During clean room execution, the datasources and datasinks get presented to the application as file system mount points using the [Azure Storage Blosefuse](https://github.com/Azure/azure-storage-fuse/tree/main?tab=readme-ov-file#about) driver or the [s3fs fuse](https://github.com/s3fs-fuse/s3fs-fuse) driver.
+>
+> The application reads/writes data from/to these mountpoint(s) in clear text. If CSE is configured (for Azure blob storage) then under the hood, the storage system is configured to handle all the cryptography semantics, and transparently decrypts/encrypt the data using the [DEK](#61-kek-dek-based-encryption-approach) corresponding to each datastore.
+
 <br>
 <details><summary><em>Azure CLI commands used</em></summary>
 <br>
@@ -294,35 +299,11 @@ The managed identities created earlier as part of [publishing the data](#publish
 
 
 ```powershell
-./scripts/contract/grant-deployment-access.ps1 -demo $demo
+./scripts/contract/grant-cleanroom-access.ps1 -demo $demo
 ```
 
 > [!IMPORTANT]
 > The command configures an OIDC issuer with the consortium at an Azure Active Directory Tenant level. In a setup where multiple parties belongs to the same tenant, it is important to avoid any race conditions in setting up this OIDC issuer. For such setups, it is recommended that this command should be executed by the affected parties one after the other, and not simultaneously.
-
-## Adding datasets for collabaration (northwind, woodgrove)
-
-The following command adds details about the datastores to be accessed by the clean room and their mode (source/sink) to the contract:
-
-
-```powershell
-./scripts/specification/add-dataset.ps1 -demo $demo
-```
-
-> [!TIP]
-> <a name="MountPoints"></a>
-> During clean room execution, the datasources and datasinks get presented to the application as file system mount points using the [Azure Storage Blosefuse](https://github.com/Azure/azure-storage-fuse/tree/main?tab=readme-ov-file#about) driver or the [s3fs fuse](https://github.com/s3fs-fuse/s3fs-fuse) driver.
->
-> The application reads/writes data from/to these mountpoint(s) in clear text. If CSE is configured (for Azure blob storage) then under the hood, the storage system is configured to handle all the cryptography semantics, and transparently decrypts/encrypt the data using the [DEK](#61-kek-dek-based-encryption-approach) corresponding to each datastore.
-
-<br>
-<details><summary><em>Azure CLI commands used</em></summary>
-<br>
-
-- `az cleanroom config add-datasource` - configure a data source for reading data in the clean room.
-- `az cleanroom config add-datasink` - configure a data sink for writing data from the clean room.
-</details>
-<br>
 
 # Setting up query execution
 ## Adding query to execute in the collaboration (woodgrove)
@@ -331,7 +312,7 @@ The following command adds details about the query to be executed within the cle
 
 
 ```powershell
-pwsh ./demos/$demo/add-query.ps1
+pwsh ./scripts/contract/add-query.ps1 -demo $demo
 ```
 
 ## Agreeing upon the query for execution (northwind, woodgrove)
@@ -342,7 +323,7 @@ From a confidentiality perspective, the query document creation and proposal can
 
 <!--TODO: Add query to figure out the contract ID by hitting CGS.-->
 ```powershell
-./scripts/contract/confirm-query.ps1 -contractId $contractId -demo $demo
+./scripts/contract/approve-query.ps1 -demo $demo
 ```
 
 # Using the clean room
@@ -350,7 +331,7 @@ From a confidentiality perspective, the query document creation and proposal can
 The party interested in getting the query results (*woodgrove* in our case) can do so by running the following:
 
 ```powershell
-./scripts/cleanroom/run-query.ps1 -contractId $contractId
+./scripts/cleanroom/run-query.ps1
 ```
 Note: for *client* to run the query it needs to be added as a user that does not publish any dataset or perform any query approval.
 

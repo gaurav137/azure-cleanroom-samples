@@ -101,5 +101,13 @@ else {
         "No datasink available for persona '$persona' in demo '$demo'."
 }
 
+#
+# Create datasource/datasink entries in the configuration file.
+#
 pwsh $PSScriptRoot/../specification/initialize-specification.ps1 -demo $demo
 pwsh $PSScriptRoot/../specification/add-specification-data.ps1 -demo $demo
+
+#
+# Publish the datasource/datasink entries from the configuration file as dataset documents in the collaboration.
+#
+pwsh $PSScriptRoot/../specification/add-dataset.ps1 -demo $demo

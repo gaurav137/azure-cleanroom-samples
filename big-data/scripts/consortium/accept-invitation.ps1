@@ -39,6 +39,17 @@ Start-Process az `
 
 # Accept the invitation and becomes an active member in the consortium.
 $invitationId = Get-Content "$publicDir/$persona.invitation-id"
+$status = (az cleanroom governance user-identity invitation show  `
+        --invitation-id $invitationId `
+        --governance-client $cgsClient `
+        --query status `
+        --output tsv)
+if ($status -eq "Finalized") {
+    Write-Log Verbose `
+        "Invitation $invitationId was already accepted."
+    return
+}
+
 az cleanroom governance user-identity invitation accept `
     --invitation-id $invitationId `
     --governance-client $cgsClient
