@@ -161,9 +161,9 @@ $envVarsClientDeploy = @{
     az cleanroom governance member activate --governance-client $ccfOperatorClient
 
     # Setting up Microsoft IDPs as trusted JWT token issuers for user identity.
-    Write-Log Verbose "Submitting set_ca_cert_bundle proposal for DigiCert Global Root CA"
+    Write-Log Verbose "Submitting set_ca_cert_bundle proposal for trusted root CAs"
     az cleanroom governance proposal create `
-        --content "$PSScriptRoot/proposals/set_ca_cert_bundle/digicert_global_root_ca.json" `
+        --content "$PSScriptRoot/proposals/set_ca_cert_bundle/trusted_root_cas.json" `
         --governance-client $ccfOperatorClient
     
     Write-Log Verbose "Submitting set_jwt_issuer proposal for sts.windows.net"
@@ -171,9 +171,9 @@ $envVarsClientDeploy = @{
         --content "$PSScriptRoot/proposals/set_jwt_issuer/sts.windows.net.json" `
         --governance-client $ccfOperatorClient
 
-    Write-Log Verbose "Submitting set_jwt_issuer proposal for login.microsoftonline.com (no auto-refresh)"
+    Write-Log Verbose "Submitting set_jwt_issuer proposal for login.microsoftonline.com"
     az cleanroom governance proposal create `
-        --content "$PSScriptRoot/proposals/set_jwt_issuer/auto_refresh_false/login.microsoftonline.com.json" `
+        --content "$PSScriptRoot/proposals/set_jwt_issuer/login.microsoftonline.com.json" `
         --governance-client $ccfOperatorClient
 
 
