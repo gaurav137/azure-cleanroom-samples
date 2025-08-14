@@ -135,7 +135,7 @@ The following Azure resources are created as part of initialization:
 
 # Setting up the clean room infrastructure
 > [!IMPORTANT]
-> Ensure that you use the correct console window that corresponds to the persona for the commands mentioned below. The (`persona`) is called out in the section headigs.
+> Ensure that you use the correct console window that corresponds to the persona for the commands mentioned below. The (`persona`) is called out in the section headings.
 
 ## Consortium creation (operator)
 Collaboration using a CCR is realized and governed through a consortium created using [CCF](https://microsoft.github.io/CCF/main/overview/what_is_ccf.html) hosting a [Clean Room Governance Service (CGS)](https://github.com/Azure/azure-cleanroom/tree/main/src/governance). 

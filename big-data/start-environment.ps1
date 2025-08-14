@@ -57,38 +57,6 @@ function Get-Confirmation {
     return ($response -eq $YesLabel.ToLower())
 }
 
-function Get-Digest {
-    [CmdletBinding()]
-    param (
-        [Parameter(Mandatory = $true)]
-        [string]$repo,
-
-        [Parameter(Mandatory = $true)]
-        [string]$containerName,
-
-        [Parameter(Mandatory = $true)]
-        [string]$tag
-    )
-
-    # Explicit login required for registry below for oras manifest fetch to work.
-    $cleanroomPrRegistry = "cleanroomemuprregistry"
-    if ($repo.StartsWith($cleanroomPrRegistry)) {
-        az acr login --name $cleanroomPrRegistry
-    }
-    $manifest = oras manifest fetch $repo/"$containerName":$tag
-
-    $manifestRaw = ""
-    foreach ($line in $manifest) {
-        $manifestRaw += $line + "`n"
-    }
-    $shaGenerator = [System.Security.Cryptography.SHA256]::Create()
-    $manifestRaw = $manifestRaw.TrimEnd("`n")
-    $shaBytes = $shaGenerator.ComputeHash([System.Text.Encoding]::UTF8.GetBytes($manifestRaw))
-    $digest = ([System.BitConverter]::ToString($shaBytes) -replace '-').ToLowerInvariant()
-    $shaGenerator.Dispose()
-    return "sha256:$digest"
-}
-
 function Get-SemanticVersionFromTag {
     param (
         [string]$tag
@@ -242,7 +210,6 @@ if ($persona -eq "operator") {
         #
         # Use AZCLI_ overrides till latest images are available in mcr.microsoft.com.
         #
-        $digest = Get-Digest -repo $repo -containerName "workloads/cleanroom-spark-analytics-app" -tag $tag
         $semanticVersion = Get-SemanticVersionFromTag $tag
         $envVars = @{
             "CREDENTIAL_PROXY_ENDPOINT"                                                           = $credentialProxyEndpoint
@@ -260,7 +227,7 @@ if ($persona -eq "operator") {
             "AZCLI_CLEANROOM_CLUSTER_PROVIDER_SPARK_FRONTEND_SECURITY_POLICY_DOCUMENT_URL"        = "$repo/policies/workloads/cleanroom-spark-frontend-security-policy:$tag"
             "AZCLI_CLEANROOM_CLUSTER_PROVIDER_SPARK_FRONTEND_CHART_URL"                           = "$repo/workloads/helm/cleanroom-spark-frontend:$semanticVersion"
             "AZCLI_CLEANROOM_SIDECARS_VERSIONS_DOCUMENT_URL"                                      = "$repo/sidecar-digests:$tag"
-            "AZCLI_CLEANROOM_ANALYTICS_APP_IMAGE_URL"                                             = "$repo/workloads/cleanroom-spark-analytics-app@$digest"
+            "AZCLI_CLEANROOM_ANALYTICS_APP_IMAGE_URL"                                             = "$repo/workloads/cleanroom-spark-analytics-app:$tag"
             "AZCLI_CLEANROOM_ANALYTICS_APP_IMAGE_POLICY_DOCUMENT_URL"                             = "$repo/policies/workloads/cleanroom-spark-analytics-app-security-policy:$tag"
         }
         Start-Process docker -ArgumentList "compose -p $cleanroomClusterProviderName -f $dockerFileDir/cleanroom-cluster/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait
