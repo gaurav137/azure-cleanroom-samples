@@ -20,7 +20,7 @@ Import-Module $PSScriptRoot/../common/common.psm1
 
 $clCluster = Get-Content $privateDir/cl-cluster.json | ConvertFrom-Json
 $clusterName = $clCluster.name
-$kubeConfig = "${privateDir}/k8s-credentials.yaml"
+$kubeConfig = "${publicDir}/k8s-credentials.yaml"
 
 $configUrl = (Get-Content $configEndpointFile | ConvertFrom-Json).url
 $configUrlCaCert = (Get-Content $configEndpointFile | ConvertFrom-Json).caCert
