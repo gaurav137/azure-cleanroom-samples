@@ -7,6 +7,7 @@ param
     $securityPolicyCreationOption = "allow-all",
 
     [string]$privateDir = "$samplesRoot/demo-resources/private",
+    [string]$publicDir = "$samplesRoot/demo-resources/public",
 
     [string]
     $configEndpointFile

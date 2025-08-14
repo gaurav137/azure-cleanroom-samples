@@ -361,5 +361,6 @@ $serviceCert = "$publicDir/$serviceCertFileName"
 
 pwsh $PSScriptRoot/enable-analytics-workload.ps1 `
     -privateDir $privateDir `
+    -publicDir $publicDir `
     -securityPolicyCreationOption $option `
     -configEndpointFile $privateDir/analytics-workload-config-endpoint.json

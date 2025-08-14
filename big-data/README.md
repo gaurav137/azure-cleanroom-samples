@@ -317,8 +317,10 @@ The following command adds details about the query to be executed within the cle
 
 
 ```powershell
-pwsh ./scripts/contract/add-query.ps1 -demo $demo
+./scripts/contract/add-query.ps1 -demo $demo
 ```
+
+The query is picked from [query.txt](demos/analytics/query/woodgrove/query1/query.txt).
 
 ## Agreeing upon the query for execution (northwind, woodgrove)
 
