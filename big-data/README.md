@@ -80,7 +80,7 @@ $persona = (Choose-Option -options @('operator','litware','northwind','woodgrove
 ./big-data/start-environment.ps1 -shareCredentials -persona $persona
 ```
 
-This create a separate docker container for each party that contains an isolated enviroment, while sharing some host volumes across all of them to simplify sharing 'public' configuration details across parties.
+This create a separate docker container for each party that contains an isolated environment, while sharing some host volumes across all of them to simplify sharing 'public' configuration details across parties.
 
 > [!IMPORTANT]
 > The command configures the environment to use a randomly generated resource group name on every invocation. To control the name, or to reuse an existing resource group, pass it in using the `-resourceGroup` parameter.
@@ -108,11 +108,14 @@ The command shows the subscription that will be used for resource creation by th
 > - If another subscription is to be used for creating resources, execute `az account set` to select if before executing the remaining steps.
 
 
-Post login, initialize the environment for executing the samples by executing the following command from the `/home/samples` directory:
+Post login, initialize the environment for executing the samples by executing the following command from the `/home/samples` directory for **every** persona:
 
 ```powershell
 ./scripts/initialize-environment.ps1
 ```
+Below is an example setup of 3 command prompts in which `start-environment` was executed before and now `initialize-environment` is about to be executed.
+
+![alt text](command-prompts.png)
 
 This command create the resource group and other Azure resources required for executing the samples such as a storage account, container registry and key vault (Premium).
 
