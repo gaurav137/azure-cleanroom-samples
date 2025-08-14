@@ -128,12 +128,14 @@ This command create the resource group and other Azure resources required for ex
 
 The following Azure resources are created as part of initialization:
  - Storage Account for `northwind` and `woodgrove` environments to use as a backing store for clean room input and output.
- - Storage Account with public blob access enabled for `northwind` and `woodgrove` environments to store federated identity token issuer details.
+ - Storage Account for `operator` environment to store federated identity token issuer details.
  - Storage Account with shared key access enabled for `operator` environment to use as a backing store for CCF deployments.
 </details>
 <br>
 
 # Setting up the clean room infrastructure
+> [!IMPORTANT]
+> Ensure that you use the correct console window that corresponds to the persona for the commands mentioned below. The (`persona`) is called out in the section headigs.
 
 ## Consortium creation (operator)
 Collaboration using a CCR is realized and governed through a consortium created using [CCF](https://microsoft.github.io/CCF/main/overview/what_is_ccf.html) hosting a [Clean Room Governance Service (CGS)](https://github.com/Azure/azure-cleanroom/tree/main/src/governance). 
