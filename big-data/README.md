@@ -13,14 +13,13 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
 - [Samples environment (per collaborator)](#samples-environment-per-collaborator)
   - [Bringing up the environment](#bringing-up-the-environment)
   - [Initializing the environment](#initializing-the-environment)
-- [Setting up the consortium](#setting-up-the-consortium)
-  - [Member identity creation (operator)](#member-identity-creation-operator)
+- [Setting up the clean room infrastructure](#setting-up-the-clean-room-infrastructure)
+  - [Consortium creation (operator)](#consortium-creation-operator)
+  - [Cleanroom environment creation (operator)](#cleanroom-environment-creation-operator)
+- [Setting up the collaborators](#setting-up-the-collaborators)
   - [User identity creation (northwind, woodgrove)](#user-identity-creation-northwind-woodgrove)
-  - [Create the CCF instance (operator)](#create-the-ccf-instance-operator)
   - [Invite users to the consortium (operator)](#invite-users-to-the-consortium-operator)
   - [Accepting invitations (northwind, woodgrove)](#accepting-invitations-northwind-woodgrove)
-- [Setting up the Cleanroom environment](#setting-up-the-cleanroom-environment)
-  - [Create the cluster instance (operator)](#create-the-cluster-instance-operator)
 - [Publishing data](#publishing-data)
   - [KEK-DEK based encryption approach](#kek-dek-based-encryption-approach)
   - [Encrypt and upload data (northwind, woodgrove)](#encrypt-and-upload-data-northwind-woodgrove)
@@ -30,8 +29,8 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
   - [Adding query to execute in the collaboration (woodgrove)](#adding-query-to-execute-in-the-collaboration-woodgrove)
   - [Agreeing upon the query for execution (northwind, woodgrove)](#agreeing-upon-the-query-for-execution-northwind-woodgrove)
 - [Using the clean room](#using-the-clean-room)
-  - [Executing the query (woodgrove, client)](#executing-the-query-woodgrove-client)
-  - [View output (woodgrove, client)](#view-output-woodgrove-client)
+  - [Executing the query (woodgrove)](#executing-the-query-woodgrove)
+  - [View output (woodgrove)](#view-output-woodgrove)
 
 # Overview
 
@@ -42,7 +41,6 @@ The demo shows collaborations where one or more of the following parties come to
 
 The following parties are additionally involved in completing the end to end demo:
   - **_Operator_**, clean room provider hosting the CCR infrastructure.
-  - **_Client_**, consumer invoking the CCR endpoint to gather insights, without any access to the protected data itself.
 
 In all cases, a CCR will be executed to run the application while protecting the privacy of all ingested data, as well as protecting any confidential output. The CCR instance can be deployed by the **_operator_**, any of the collaborators or even the **_client_** without any impact on the zero-trust promise architecture.
 
@@ -133,19 +131,25 @@ The following Azure resources are created as part of initialization:
 </details>
 <br>
 
-# Setting up the consortium
+# Setting up the clean room infrastructure
+
+## Consortium creation (operator)
 Collaboration using a CCR is realized and governed through a consortium created using [CCF](https://microsoft.github.io/CCF/main/overview/what_is_ccf.html) hosting a [Clean Room Governance Service (CGS)](https://github.com/Azure/azure-cleanroom/tree/main/src/governance). 
 
 From a confidentiality perspective any of the collaborators or the *operator* can create the CCF instance without affecting the zero-trust assurances. In these samples, we assume that it was agreed upon that the *operator* will host the CCF instance. The *operator* would create the CCF instance and then invite all the collaborators as users into the consortium.
 
-## Member identity creation (operator)
-A CCF member is identified by a public-key certificate used for client authentication and command signing.
+### Create the CCF instance <!-- omit from toc -->
 
-The operator of the CCF network creates their member identity by generating their public and private key pair by executing the following command:
+The _operator_ (who is hosting the CCF instance) brings up a CCF instance using Confidential ACI by executing this command:
 
 ```powershell
-./scripts/consortium/initialize-member.ps1
+./scripts/consortium/start-consortium.ps1
 ```
+
+> [!NOTE]
+> In the default sample environment, the containers for all participants have their `/home/samples/demo-resources/public` mapped to a single host directory, so details about the CCF endpoint would be available to all parties automatically once generated. If the configuration has been changed, the CCF details needs to made available in `/home/samples/demo-resources/public` of each member before executing subsequent steps.
+
+The above script also creates the member identity for the operator of the CCF network by generating their public and private key pair. A CCF member is identified by a public-key certificate used for client authentication and command signing.
 
 > [!IMPORTANT]
 > 
@@ -156,9 +160,28 @@ The operator of the CCF network creates their member identity by generating thei
 <details><summary><em>Azure CLI commands used</em></summary>
 <br>
 
-- `az cleanroom governance member keygenerator-sh` - generate consortium member certificate and keys.
+- `az cleanroom governance member keygenerator-sh` - generate CCF network operator certificate and keys.
+- `az cleanroom ccf network create` - initialize a CCF network using `caci` (Confidential ACI) infrastructure.
+- `az cleanroom ccf network transition-to-open` - activate the CCF network.
+- `az cleanroom ccf provider configure` - deploy a local container hosting a client for interacting with the CCF network infrastructure.
+- `az cleanroom governance client deploy` - deploy a local container hosting a client for interacting with the consortium.
 </details>
 <br>
+
+## Cleanroom environment creation (operator)
+
+### Create the cluster instance <!-- omit from toc -->
+
+The _operator_ (who is hosting the cleanroom infra) brings up AKS cluster instance to run the Analytics workload (query). This cluster uses pods backed by Confidential ACI. Cluster creation is done by executing this command:
+
+```powershell
+./scripts/cleanroom-cluster/start-cleanroom-cluster.ps1
+```
+
+> [!NOTE]
+> In the default sample environment, the containers for all participants have their `/home/samples/demo-resources/public` mapped to a single host directory, so details about the cluster endpoint would be available to all parties automatically once generated. If the configuration has been changed, the CCF details needs to made available in `/home/samples/demo-resources/public` of each user before executing subsequent steps.
+
+# Setting up the collaborators
 
 ## User identity creation (northwind, woodgrove)
 The users in the collaboration are identified by their Microsoft account (work/school or Azure account). Their login id (eg `foo@outlook.com`) is required for adding them to the collaboration.
@@ -175,29 +198,6 @@ After signing up for the accounts and choosing the email address each collaborat
 ```powershell
 ./scripts/consortium/initialize-user.ps1 -email <email>
 ```
-
-## Create the CCF instance (operator)
-
-The _operator_ (who is hosting the CCF instance) brings up a CCF instance using Confidential ACI by executing this command:
-
-```powershell
-./scripts/consortium/start-consortium.ps1
-```
-
-> [!NOTE]
-> In the default sample environment, the containers for all participants have their `/home/samples/demo-resources/public` mapped to a single host directory, so details about the CCF endpoint would be available to all parties automatically once generated. If the configuration has been changed, the CCF details needs to made available in `/home/samples/demo-resources/public` of each member before executing subsequent steps.
-
-<br>
-<details><summary><em>Azure CLI commands used</em></summary>
-<br>
-
-- `az cleanroom governance member keygenerator-sh` - generate CCF network operator certificate and keys.
-- `az cleanroom ccf network create` - initialize a CCF network using `caci` (Confidential ACI) infrastructure.
-- `az cleanroom ccf network transition-to-open` - activate the CCF network.
-- `az cleanroom ccf provider configure` - deploy a local container hosting a client for interacting with the CCF network infrastructure.
-- `az cleanroom governance client deploy` - deploy a local container hosting a client for interacting with the consortium.
-</details>
-<br>
 
 ## Invite users to the consortium (operator)
 The _operator_ (who is hosting the CCF instance) invites each user in the collaboration with the consortium using the identity details generated [above](#member-identity-creation-operator-litware-northwind-woodgrove).
@@ -229,19 +229,6 @@ With the above steps the consortium creation that drives the creation and execut
 
 > [!NOTE]
 > In the default sample environment, the containers for all participants have their `/home/samples/demo-resources/public` mapped to a single host directory, so details about the CCF endpoint would be available to all parties automatically once generated by the _operator_. If the configuration has been changed, the CCF details needs to made available in `/home/samples/demo-resources/public` of each member before executing subsequent steps.
-
-# Setting up the Cleanroom environment
-
-## Create the cluster instance (operator)
-
-The _operator_ (who is hosting the cleanroom infra) brings up AKS cluster instance to run the Analytics workload (query). This cluster uses pods backed by Confidential ACI. Cluster creation is done by executing this command:
-
-```powershell
-./scripts/cleanroom-cluster/start-cleanroom-cluster.ps1
-```
-
-> [!NOTE]
-> In the default sample environment, the containers for all participants have their `/home/samples/demo-resources/public` mapped to a single host directory, so details about the cluster endpoint would be available to all parties automatically once generated. If the configuration has been changed, the CCF details needs to made available in `/home/samples/demo-resources/public` of each user before executing subsequent steps.
 
 # Publishing data
 Sensitive data that any of the parties want to bring into the collaboration is ideally encrypted in a manner that ensures the key to decrypt this data will only be released to the clean room environment. This encryption is optional in case a collaborator does not want to use Client Side Encryption (CSE) for their data. This demo showcases this approach.
@@ -359,7 +346,7 @@ From a confidentiality perspective, the query document creation and proposal can
 ```
 
 # Using the clean room
-## Executing the query (woodgrove, client)
+## Executing the query (woodgrove)
 The party interested in getting the query results (*woodgrove* in our case) can do so by running the following:
 
 ```powershell
@@ -367,7 +354,7 @@ The party interested in getting the query results (*woodgrove* in our case) can 
 ```
 Note: for *client* to run the query it needs to be added as a user that does not publish any dataset or perform any query approval.
 
-## View output (woodgrove, client)
+## View output (woodgrove)
 
 The query execution output is written to the datasinks configured. Check the Azure storage container or S3 bucket to see the output files that would get generated.
 

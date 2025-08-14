@@ -31,6 +31,11 @@ $sa = $initResult.ccfsa.id
 $ccfName = $persona + "-ccf"
 
 #
+# Generate operator member identity.
+#
+pwsh $PSScriptRoot/initialize-member.ps1
+
+#
 # Create a CCF instance.
 #
 $subscriptionId = az account show --query id --output tsv
