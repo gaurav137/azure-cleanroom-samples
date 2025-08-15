@@ -113,6 +113,14 @@ Post login, initialize the environment for executing the samples by executing th
 ```powershell
 ./scripts/initialize-environment.ps1
 ```
+
+> [!IMPORTANT]
+> The above script creates an Azure Storage account for OIDC usage when running for the `operator` persona. If you have a pre-configured Azure storage account for OIDC usage then supply that account name for the `operator` persona as follows:  
+> ```powershell
+> $storageAccountName = <name>
+> ./scripts/initialize-environment.ps1 -preProvisionedOIDCStorageAccount $storageAccountName
+> ```
+
 Below is an example setup of 3 command prompts in which `start-environment` was executed before and now `initialize-environment` is about to be executed.
 
 ![alt text](command-prompts.png)
