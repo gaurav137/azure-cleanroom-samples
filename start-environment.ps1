@@ -121,7 +121,7 @@ if ($shareCredentials -or ($persona -eq "operator")) {
         & {
             # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
             $PSNativeCommandUseErrorActionPreference = $false
-            $(docker exec $containerName sh -c "az account get-access-token")
+            $(docker exec $containerName sh -c "az account get-access-token" 1>$null)
         }
 
         if (0 -ne $LASTEXITCODE) {

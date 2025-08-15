@@ -1,13 +1,14 @@
 [CmdletBinding()]
 param
 (
-    [string]$clusterProviderClient = "azure-cleanroom-samples-cluster-provider",
+    [string]$privateDir = "$samplesRoot/demo-resources/private",
+    [string]$publicDir = "$samplesRoot/demo-resources/public",
+
     [string]
     [ValidateSet("cached", "cached-debug", "allow-all")]
     $securityPolicyCreationOption = "allow-all",
 
-    [string]$privateDir = "$samplesRoot/demo-resources/private",
-    [string]$publicDir = "$samplesRoot/demo-resources/public",
+    [string]$clusterProviderClient = "azure-cleanroom-samples-cluster-provider",
 
     [string]
     $configEndpointFile

@@ -17,7 +17,9 @@ param(
 
     [string]$environmentConfig = "$privateDir/$resourceGroup.generated.json",
     [string]$secretstoreConfig = "$privateDir/secretstores.config",
-    [string]$localSecretStore = "$secretDir/$persona-local-store"
+    [string]$localSecretStore = "$secretDir/$persona-local-store",
+    [string]$preProvisionedOIDCStorageAccount = "",
+    [string]$subscription = $null
 )
 
 #https://learn.microsoft.com/en-us/powershell/scripting/learn/experimental-features?view=powershell-7.4#psnativecommanderroractionpreference
@@ -50,7 +52,7 @@ else {
     $overrides = @{}
 }
 
-$subs = $overrides['$SUBSCRIPTION']
+$subs = $overrides['$SUBSCRIPTION'] ?? $subscription
 if ($null -ne $subs) {
     Write-Log Warning `
         "Setting active Azure subscription to $subs."
@@ -182,18 +184,35 @@ else {
 #   b) To authenticate telemetry access.
 #
 if ($isOperator) {
-    if ($overrides['$OIDC_STORAGE_ACCOUNT_NAME'] -eq "cleanroomoidc") {
-        $oidcStorageAccount = $overrides['$OIDC_STORAGE_ACCOUNT_NAME']
-        $oidcRG = $overrides['$OIDC_STORAGE_ACCOUNT_RESOURCE_GROUP']
+    # for MSFT tenant 72f988bf-86f1-41af-91ab-2d7cd011db47 we must a use pre-provisioned whitelisted storage account
+    $tenantId = az account show --query tenantId -o tsv
+    if ($tenantId -eq "72f988bf-86f1-41af-91ab-2d7cd011db47" -and $preProvisionedOIDCStorageAccount -eq "") {
+        Write-Log Error "No pre-provisioned OIDC storage account provided for MSFT tenant. Please set the " `
+            "`preProvisionedOIDCStorageAccount` parameter in the start-environment.ps1 " `
+            "to the name of a pre-provisioned storage account."
+        throw "No pre-provisioned OIDC storage account provided for MSFT tenant."
+    }
+
+    $oidcStorageAccount = ""
+    if ($preProvisionedOIDCStorageAccount -ne "") {
+        $oidcStorageAccount = $preProvisionedOIDCStorageAccount
         Write-Log Warning `
-            "Skipped creation of pre-configured OIDC storage account  '$oidcStorageAccount'."
-        $result.oidcsa = (az storage account show --name $oidcStorageAccount --resource-group $oidcRG) | ConvertFrom-Json
+            "Using pre-provisioned OIDC storage account '$oidcStorageAccount'."
+        $status = (az storage blob service-properties show `
+                --account-name $oidcStorageAccount `
+                --auth-mode login `
+                --query "staticWebsite.enabled" `
+                --output tsv)
+        if ($status -ne "true") {
+            throw "Pre-provisioned storage account $oidcStorageAccount should have static website enabled."
+        }
+
+        $result.oidcsa = (az storage account show --name $oidcStorageAccount) | ConvertFrom-Json
     }
     else {     
         $oidcStorageAccount = $($overrides['$OIDC_STORAGE_ACCOUNT_NAME'] ?? "oidcsa${uniqueString}")
-        $oidcRG = $($overrides['$OIDC_STORAGE_ACCOUNT_RESOURCE_GROUP'] ?? "${resourceGroup}")
         $result.oidcsa = Create-Storage-Resources `
-            -resourceGroup $oidcRG `
+            -resourceGroup $resourceGroup `
             -storageAccountName @($oidcStorageAccount) `
             -objectId $objectId
         az storage blob service-properties update `

@@ -200,7 +200,7 @@ For demo purposes you can create Microsoft accounts by visiting [outlook.com](ht
 After signing up for the accounts and choosing the email address each collaborator supplies their Microsoft account details by executing the following command:
 
 ```powershell
-./scripts/consortium/initialize-user.ps1 -email <email>
+./scripts/consortium/share-user-identity.ps1 -email <email>
 ```
 
 ## Invite users to the consortium (operator)

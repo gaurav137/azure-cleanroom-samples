@@ -8,8 +8,8 @@ param(
     [string]$cgsClient = "azure-cleanroom-samples-governance-client-$persona",
     [string]$operatorCgsClient = "azure-cleanroom-samples-governance-client-operator",
 
-    [string]$repo = "cleanroomemuprregistry.azurecr.io",
-    [string]$tag = "16749412789"
+    [string]$repo = "$env:CLEANROOM_REPO",
+    [string]$tag = "$env:CLEANROOM_TAG"
 )
 
 #https://learn.microsoft.com/en-us/powershell/scripting/learn/experimental-features?view=powershell-7.4#psnativecommanderroractionpreference

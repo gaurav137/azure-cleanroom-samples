@@ -4,7 +4,6 @@ param(
     [string]$resourceGroupLocation = "$env:RESOURCE_GROUP_LOCATION",
 
     [string]$samplesRoot = "/home/samples",
-    [string]$secretDir = "$samplesRoot/demo-resources/secret",
     [string]$privateDir = "$samplesRoot/demo-resources/private",
     [string]$publicDir = "$samplesRoot/demo-resources/public",
 
@@ -16,8 +15,8 @@ param(
     [string]$environmentConfig = "$privateDir/$resourceGroup.generated.json",
     [string]$oidcContainerName = "az-cleanroom-samples-$resourceGroup-oidc",
 
-    [string]$repo = "cleanroomemuprregistry.azurecr.io",
-    [string]$tag = "16749412789"
+    [string]$repo = "$env:CLEANROOM_REPO",
+    [string]$tag = "$env:CLEANROOM_TAG"
 )
 
 #https://learn.microsoft.com/en-us/powershell/scripting/learn/experimental-features?view=powershell-7.4#psnativecommanderroractionpreference

@@ -9,7 +9,6 @@ param(
     [string]$samplesRoot = "/home/samples",
     [string]$publicDir = "$samplesRoot/demo-resources/public",
     [string]$privateDir = "$samplesRoot/demo-resources/private",
-    [string]$secretDir = "$samplesRoot/demo-resources/secret",
 
     [string]$secretstoreConfig = "$privateDir/secretstores.config",
     [string]$datastoreConfig = "$privateDir/datastores.config",

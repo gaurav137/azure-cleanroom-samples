@@ -4,7 +4,6 @@ param(
     [string]$email,
 
     [string]$samplesRoot = "/home/samples",
-    [string]$secretDir = "$samplesRoot/demo-resources/secret",
     [string]$publicDir = "$samplesRoot/demo-resources/public"
 )
 

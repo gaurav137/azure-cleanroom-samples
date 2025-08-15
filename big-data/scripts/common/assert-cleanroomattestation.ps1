@@ -21,7 +21,7 @@ function Assert-CleanroomAttestation {
     $workflowRef = "refs/heads/main"
 
     # Fetch the commit ID corresponding to the container versions
-    $tagDetails = curl -L "https://api.github.com/repos/$repo/tags" | ConvertFrom-Json | Where-Object {$_.name -eq $containerTag}
+    $tagDetails = curl -L "https://api.github.com/repos/$repo/tags" | ConvertFrom-Json | Where-Object { $_.name -eq $containerTag }
     $commitId = $tagDetails.commit.sha
 
     # Verify attestations for container images offline:
@@ -58,7 +58,7 @@ function Assert-CleanroomAttestation {
             --format json | ConvertFrom-Json
 
         $imagePath = $image.Split("@")[0]
-        $attestation = $attestationVerificationResult | Where-Object {$_.verificationResult.statement.subject.name -eq $imagePath}
+        $attestation = $attestationVerificationResult | Where-Object { $_.verificationResult.statement.subject.name -eq $imagePath }
 
         if ($attestation.verificationResult.statement.predicate.buildDefinition.resolvedDependencies.digest.gitCommit -ne $commitId) {
             Write-Log Error "Images in the deployment template are not from the expected commit."

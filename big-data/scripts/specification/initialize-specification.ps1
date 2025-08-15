@@ -11,7 +11,7 @@ param(
     [string]$publicDir = "$samplesRoot/demo-resources/public",
 
     [string]$contractConfig = "$privateDir/$resourceGroup-$demo.generated.json",
-    [string]$contractFragment = "$publicDir/$persona-$demo.config",
+    [string]$contractFragment = "$privateDir/$persona-$demo.config",
 
     [string]$managedIdentityName = ""
 )

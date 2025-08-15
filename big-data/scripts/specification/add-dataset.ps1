@@ -5,18 +5,13 @@ param(
 
     [string]$persona = "$env:PERSONA",
     [string]$resourceGroup = "$env:RESOURCE_GROUP",
-    [string]$kekName = $($($(New-Guid).Guid) -replace '-').ToLower(),
 
     [string]$samplesRoot = "/home/samples",
     [string]$publicDir = "$samplesRoot/demo-resources/public",
     [string]$privateDir = "$samplesRoot/demo-resources/private",
     [string]$demosRoot = "$samplesRoot/demos",
 
-    [string]$contractConfig = "$privateDir/$resourceGroup-$demo.generated.json",
-    [string]$contractFragment = "$publicDir/$persona-$demo.config",
-    [string]$environmentConfig = "$privateDir/$resourceGroup.generated.json",
-    [string]$secretstoreConfig = "$privateDir/secretstores.config",
-    [string]$datastoreConfig = "$privateDir/datastores.config",
+    [string]$contractFragment = "$privateDir/$persona-$demo.config",
     [string]$datasourcePath = "$demosRoot/$demo/datasource/$persona",
     [string]$datasinkPath = "$demosRoot/$demo/datasink/$persona",
     [string]$cgsClient = "azure-cleanroom-samples-governance-client-$persona"

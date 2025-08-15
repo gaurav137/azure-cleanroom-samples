@@ -14,7 +14,7 @@ param(
     [string]$cleanroomClusterProviderName = "$imageName-cluster-provider",
     [string]$telemetryDashboardName = "$imageName-telemetry",
     [string]$shellContainerName = "$imageName-shell-$persona",
-
+    
     [switch]$overwrite,
     [switch]$shareCredentials,
 
@@ -154,7 +154,7 @@ if ($shareCredentials -or ($persona -eq "operator")) {
         & {
             # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
             $PSNativeCommandUseErrorActionPreference = $false
-            $(docker exec $containerName sh -c "az account get-access-token")
+            $(docker exec $containerName sh -c "az account get-access-token" 1>$null)
         }
 
         if (0 -ne $LASTEXITCODE) {
@@ -296,6 +296,8 @@ if ($persona -eq "operator") {
             --env IDENTITY_ENDPOINT=$credentialProxyEndpoint `
             --env IDENTITY_HEADER="dummy_required_value" `
             --env HOST_PERSONA_PRIVATE_DIR=$personaBase/$($privateDir) `
+            --env CLEANROOM_REPO=$repo `
+            --env CLEANROOM_TAG=$tag `
             -v "//var/run/docker.sock:/var/run/docker.sock" `
             -v "$($sharedBase):$virtualBase" `
             -v "$personaBase/$($privateDir):$virtualBase/$privateDir" `
