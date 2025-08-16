@@ -315,9 +315,6 @@ The managed identities created earlier as part of [publishing the data](#publish
 ./scripts/contract/grant-cleanroom-access.ps1 -demo $demo
 ```
 
-> [!IMPORTANT]
-> The command configures an OIDC issuer with the consortium at an Azure Active Directory Tenant level. In a setup where multiple parties belongs to the same tenant, it is important to avoid any race conditions in setting up this OIDC issuer. For such setups, it is recommended that this command should be executed by the affected parties one after the other, and not simultaneously.
-
 # Setting up query execution
 ## Adding query to execute in the collaboration (woodgrove)
 
@@ -348,7 +345,6 @@ The party interested in getting the query results (*woodgrove* in our case) can 
 ```powershell
 ./scripts/contract/run-query.ps1 -demo $demo
 ```
-Note: for *client* to run the query it needs to be added as a user that does not publish any dataset or perform any query approval.
 
 ## View output (woodgrove)
 
