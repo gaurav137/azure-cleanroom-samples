@@ -296,7 +296,11 @@ sequenceDiagram
 > ```
 
 ## S3: Setup AWS credentials (woodgrove)
-For the S3 demo (`analytics-s3`) AWS credentials needs to be provided that has permissions to create/read/write buckets. Assuming a user was configured in AWS for this purpose, run the following command to setup the credentials supplying the access key and secret key information:
+For the S3 demo (`analytics-s3`) AWS credentials needs to be provided that has permissions to create/read/write buckets. These credentials will be used as follows:
+- By the demo scripts to create buckets and upload data in them.
+- By the clean room to access the buckets to read input datasets and create output datasets. A secret in CGS is created to store the credentials to make them available to the clean room.
+
+Assuming a user was configured in AWS for this purpose, run the following command to setup the credentials supplying the access key and secret key information:
 ```powershell
 Set-AWSCredential -AccessKey AKIA... -SecretKey wJalrXUtnF... -StoreAs "default"
 ```
