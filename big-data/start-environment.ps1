@@ -298,6 +298,7 @@ if ($persona -eq "operator") {
             --env HOST_PERSONA_PRIVATE_DIR=$personaBase/$($privateDir) `
             --env CLEANROOM_REPO=$repo `
             --env CLEANROOM_TAG=$tag `
+            --env USER=$env:USER `
             -v "//var/run/docker.sock:/var/run/docker.sock" `
             -v "$($sharedBase):$virtualBase" `
             -v "$personaBase/$($privateDir):$virtualBase/$privateDir" `

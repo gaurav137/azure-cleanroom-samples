@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("analytics")]
+    [ValidateSet("analytics", "analytics-s3")]
     [string]$demo,
 
     [string]$persona = "$env:PERSONA",
@@ -30,25 +30,32 @@ Write-Log OperationStarted `
 az cleanroom config init `
     --cleanroom-config $contractFragment
 
-if ($managedIdentityName -eq "") {
-    $uniqueString = Get-UniqueString($resourceGroup)
-    $managedIdentityName = "${uniqueString}-mi-$demo"
+if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+    Write-Log Verbose `
+        "Skipping any managed identity created for '$persona' for '$demo' demo..."
 }
+else {
 
-Write-Log OperationStarted `
-    "Creating managed identity '$managedIdentityName' in resource group '$resourceGroup'..."
-$mi = (az identity create `
-        --name $managedIdentityName `
-        --resource-group $resourceGroup) | ConvertFrom-Json
-az cleanroom config add-identity az-federated `
-    --cleanroom-config $contractFragment `
-    -n "$persona-identity" `
-    --client-id $mi.clientId `
-    --tenant-id $mi.tenantId `
-    --issuer-url $(Get-Content $publicDir/issuer.url) `
-    --backing-identity cleanroom_cgs_oidc
-Write-Log OperationCompleted `
-    "Added identity '$persona-identity' backed by '$managedIdentityName'."
+    if ($managedIdentityName -eq "") {
+        $uniqueString = Get-UniqueString($resourceGroup)
+        $managedIdentityName = "${uniqueString}-mi-$demo"
+    }
+
+    Write-Log OperationStarted `
+        "Creating managed identity '$managedIdentityName' in resource group '$resourceGroup'..."
+    $mi = (az identity create `
+            --name $managedIdentityName `
+            --resource-group $resourceGroup) | ConvertFrom-Json
+    az cleanroom config add-identity az-federated `
+        --cleanroom-config $contractFragment `
+        -n "$persona-identity" `
+        --client-id $mi.clientId `
+        --tenant-id $mi.tenantId `
+        --issuer-url $(Get-Content $publicDir/issuer.url) `
+        --backing-identity cleanroom_cgs_oidc
+    Write-Log OperationCompleted `
+        "Added identity '$persona-identity' backed by '$managedIdentityName'."
+}
 
 $configResult = @{
     contractFragment = ""

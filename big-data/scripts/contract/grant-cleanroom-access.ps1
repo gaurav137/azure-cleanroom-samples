@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("analytics")]
+    [ValidateSet("analytics", "analytics-s3")]
     [string]$demo,
 
     [string]$persona = "$env:PERSONA",
@@ -24,7 +24,13 @@ $PSNativeCommandUseErrorActionPreference = $true
 Import-Module $PSScriptRoot/../common/common.psm1
 Import-Module $PSScriptRoot/../azure-helpers/azure-helpers.psm1 -Force -DisableNameChecking
 
+if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+    Write-Log Verbose `
+        "No grant access step required for '$persona' for '$demo' demo..."
+}
+
 Test-AzureAccessToken
+
 
 $contractId = Get-Content $publicDir/analytics.contract-id
 

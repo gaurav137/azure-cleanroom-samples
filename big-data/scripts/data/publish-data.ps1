@@ -1,16 +1,19 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("analytics")]
+    [ValidateSet("analytics", "analytics-s3")]
     [string]$demo,
 
     [string]$persona = "$env:PERSONA",
     [string]$resourceGroup = "$env:RESOURCE_GROUP",
 
     [string]$samplesRoot = "/home/samples",
+    [string]$publicDir = "$samplesRoot/demo-resources/public",
     [string]$privateDir = "$samplesRoot/demo-resources/private",
     [string]$secretDir = "$samplesRoot/demo-resources/secret",
     [string]$demosRoot = "$samplesRoot/demos",
     [string]$sa = "",
+    [string]$awsProfileName = "default",
+    [string]$cgsClient = "azure-cleanroom-samples-governance-client-$persona",
 
     [string]$environmentConfig = "$privateDir/$resourceGroup.generated.json",
     [string]$secretstoreConfig = "$privateDir/secretstores.config",
@@ -34,6 +37,32 @@ if ($sa -eq "") {
     $sa = $initResult.datasa.id
 }
 
+if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+    $awsCreds = Get-AWSCredential -ProfileName $awsProfileName
+    if ($null -eq $awsCreds) {
+        throw "AWS credentials not found for profile '$awsProfileName'. Ensure the profile is configured correctly."
+    }
+    $awsAccessKeyId = $awsCreds.GetCredentials().AccessKey
+    $awsSecretAccessKey = $awsCreds.GetCredentials().SecretKey
+
+    Write-Log OperationStarted `
+        "Saving AWS credentials as a secret in CGS..."
+    $secretConfig = @{
+        awsAccessKeyId     = $awsAccessKeyId
+        awsSecretAccessKey = $awsSecretAccessKey
+    } | ConvertTo-Json | base64 -w 0
+
+    $awsConfigCgsSecretName = "consumer-aws-config"
+    $contractId = Get-Content $publicDir/analytics.contract-id
+    $awsConfigCgsSecretId = (az cleanroom governance contract secret set `
+            --secret-name $awsConfigCgsSecretName `
+            --value $secretConfig `
+            --contract-id $contractId `
+            --governance-client $cgsClient `
+            --query "secretId" `
+            --output tsv)
+}
+
 if (Test-Path -Path "$demoPath/generate-data.ps1") {
     & $demoPath/generate-data.ps1
 }
@@ -48,24 +77,57 @@ if (Test-Path -Path $datasourcePath) {
         Write-Log Verbose `
             "Enumerated datasource '$datastoreName' in '$datasourcePath'..."
 
-        az cleanroom datastore add `
-            --name $datastoreName `
-            --config $datastoreConfig `
-            --secretstore-config $secretStoreConfig `
-            --secretstore $persona-local-store `
-            --encryption-mode CPK `
-            --backingstore-type Azure_BlobStorage `
-            --backingstore-id $sa
-        $datastorePath = "$datastoreDir/$datastoreName"
-        mkdir -p $datastorePath
-        Write-Log OperationCompleted `
-            "Created data store '$datastoreName' backed by '$sa'."
+        if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+            $user = $env:USER
+            $bucketName = "$datastoreName-${user}" -replace "_", "-"
+            $region = "us-west-1"
+            if (-not (Get-S3Bucket | Where-Object { $_.BucketName -eq $bucketName })) {
+                Write-Output "Creating $bucketName..."
+                New-S3Bucket -BucketName $bucketName -Region $region
+                Write-Output "Bucket created."
+            }
+            else {
+                Write-Output "Bucket $bucketName already exists."
+            }
+            
+            # Create a datastore entry for the AWS S3 storage to with CGS secret Id as 
+            # its configuration.
+            $awsUrl = "https://s3.amazonaws.com"
+            az cleanroom datastore add `
+                --name $datastoreName `
+                --config $datastoreConfig `
+                --backingstore-type Aws_S3 `
+                --backingstore-id $awsUrl `
+                --aws-config-cgs-secret-id $awsConfigCgsSecretId `
+                --container-name $bucketName
+            $datastorePath = "$datastoreDir/$datastoreName"
+            mkdir -p $datastorePath
+            Write-Log OperationCompleted `
+                "Created data store '$datastoreName' backed by S3 bucket '$bucketName'."
 
-        cp -r $datasourcePath/$dir/* $datastorePath
-        az cleanroom datastore upload `
-            --name $datastoreName `
-            --config $datastoreConfig `
-            --src $datastorePath
+            cp -r $datasourcePath/$dir/* $datastorePath
+            Write-S3Object -BucketName $bucketName -Folder $datastorePath -Recurse  -KeyPrefix "/" -Region $region
+        }
+        else {
+            az cleanroom datastore add `
+                --name $datastoreName `
+                --config $datastoreConfig `
+                --secretstore-config $secretStoreConfig `
+                --secretstore $persona-local-store `
+                --encryption-mode CPK `
+                --backingstore-type Azure_BlobStorage `
+                --backingstore-id $sa
+            $datastorePath = "$datastoreDir/$datastoreName"
+            mkdir -p $datastorePath
+            Write-Log OperationCompleted `
+                "Created data store '$datastoreName' backed by '$sa'."
+
+            cp -r $datasourcePath/$dir/* $datastorePath
+            az cleanroom datastore upload `
+                --name $datastoreName `
+                --config $datastoreConfig `
+                --src $datastorePath
+        }
         Write-Log OperationCompleted `
             "Published data from '$datasourcePath/$dir' as data store '$datastoreName'."
     }
@@ -82,18 +144,45 @@ if (Test-Path -Path $datasinkPath) {
         Write-Log Verbose `
             "Enumerated datasink '$datastoreName' in '$datasinkPath'..."
 
-        az cleanroom datastore add `
-            --name $datastoreName `
-            --config $datastoreConfig `
-            --secretstore-config $secretStoreConfig `
-            --secretstore $persona-local-store `
-            --encryption-mode CPK `
-            --backingstore-type Azure_BlobStorage `
-            --backingstore-id $sa
-        $datastorePath = "$datastoreDir/$datastoreName"
-        mkdir -p $datastorePath
-        Write-Log OperationCompleted `
-            "Created data store '$datastoreName' backed by '$sa'."
+        if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+            $user = $env:CODESPACES -eq "true" ? $env:GITHUB_USER : $env:USER
+            $bucketName = "$datastoreName-${user}" -replace "_", "-"
+            $region = "us-west-1"
+            if (-not (Get-S3Bucket | Where-Object { $_.BucketName -eq $bucketName })) {
+                New-S3Bucket -BucketName $bucketName -Region $region
+                Write-Output "Bucket $bucketName created."
+            }
+            else {
+                Write-Output "Bucket $bucketName already exists."
+            }
+
+            # Create a datastore entry for the AWS S3 storage to with CGS secret Id as 
+            # its configuration.
+            $awsUrl = "https://s3.amazonaws.com"
+            az cleanroom datastore add `
+                --name $datastoreName `
+                --config $datastoreConfig `
+                --backingstore-type Aws_S3 `
+                --backingstore-id $awsUrl `
+                --aws-config-cgs-secret-id $awsConfigCgsSecretId `
+                --container-name $bucketName
+            Write-Log OperationCompleted `
+                "Created data store '$datastoreName' backed by S3 bucket '$bucketName'."
+        }
+        else {
+            az cleanroom datastore add `
+                --name $datastoreName `
+                --config $datastoreConfig `
+                --secretstore-config $secretStoreConfig `
+                --secretstore $persona-local-store `
+                --encryption-mode CPK `
+                --backingstore-type Azure_BlobStorage `
+                --backingstore-id $sa
+            $datastorePath = "$datastoreDir/$datastoreName"
+            mkdir -p $datastorePath
+            Write-Log OperationCompleted `
+                "Created data store '$datastoreName' backed by '$sa'."
+        }
     }
 }
 else {
