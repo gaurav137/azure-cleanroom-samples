@@ -33,6 +33,27 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
 
 # Overview
 
+End to end demos showcasing scenario oriented usage:
+- Confidential execution of audited queries on protected datasets using a standalone DB engine residing within the CCR. [`analytics`](./demos/analytics/README.md)
+- Confidential inference from sensitive data using a protected ML model. [`inference`](./demos/inference/README.md)
+- Confidential fine tuning of a protected ML model on protected datasets. [`training`](./demos/training/README.md)
+
+|                     |                 `analytics`                 |                       `analytics-s3`                       |               `analytics-sse`               |
+| :------------------ | :-----------------------------------------: | :--------------------------------------------------------: | :-----------------------------------------: |
+| _**Collaboration**_ |                                             |                                                            |                                             |
+| Data Source         | :heavy_check_mark: Azure Blob Storage (CSE) | :heavy_check_mark: Azure Blob Storage (CSE) & AWS S3 (SSE) | :heavy_check_mark: Azure Blob Storage (SSE) |
+| Data Sink           | heavy_check_mark: Azure Blob Storage (CSE)  |              :heavy_check_mark: AWS S3 (SSE)               | :heavy_check_mark: Azure Blob Storage (SSE) |
+| Data Access         |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
+| _**Governance**_    |                                             |                                                            |                                             |
+| Contract            |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
+| Document Store      |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
+| Telemetry           |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
+| Audit               |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
+| Identity Provider   |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
+| CA                  |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
+
+<br>
+
 <!--TODO: Add links to corresponding readme in product repo for each capability.-->
 The demo shows collaborations where one or more of the following parties come together:
   - **_Northwind_**, collaborator owning sensitive dataset(s) that can be consumed by applications inside a CCR.
