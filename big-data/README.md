@@ -35,9 +35,6 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
 # Overview
 
 End to end demos showcasing scenario oriented usage:
-- Confidential execution of audited queries on protected datasets using a standalone DB engine residing within the CCR. [`analytics`](./demos/analytics/README.md)
-- Confidential inference from sensitive data using a protected ML model. [`inference`](./demos/inference/README.md)
-- Confidential fine tuning of a protected ML model on protected datasets. [`training`](./demos/training/README.md)
 
 |                     |                 `analytics`                 |                       `analytics-s3`                       |               `analytics-sse`               |
 | :------------------ | :-----------------------------------------: | :--------------------------------------------------------: | :-----------------------------------------: |
