@@ -61,7 +61,7 @@ The demo shows collaborations where one or more of the following parties come to
 The following parties are additionally involved in completing the end to end demo:
   - **_Operator_**, clean room provider hosting the CCR infrastructure.
 
-In all cases, a CCR will be executed to run the application while protecting the privacy of all ingested data, as well as protecting any confidential output. The CCR instance can be deployed by the **_operator_**, any of the collaborators or even the **_client_** without any impact on the zero-trust promise architecture.
+In all cases, a CCR will be executed to run the application while protecting the privacy of all ingested data, as well as protecting any confidential output. The CCR instance can be deployed by the **_operator_**, any of the collaborators without any impact on the zero-trust promise architecture.
 
 # Samples environment (per collaborator)
 All the involved parties need to bring up a local environment to participate in the sample collaborations.
