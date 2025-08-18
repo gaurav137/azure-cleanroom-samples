@@ -42,6 +42,7 @@ End to end demos showcasing scenario oriented usage:
 | Data Source         | :heavy_check_mark: Azure Blob Storage (CSE) | :heavy_check_mark: Azure Blob Storage (CSE) & AWS S3 (SSE) | :heavy_check_mark: Azure Blob Storage (SSE) |
 | Data Sink           | :heavy_check_mark: Azure Blob Storage (CSE) |              :heavy_check_mark: AWS S3 (SSE)               | :heavy_check_mark: Azure Blob Storage (SSE) |
 | Data Access         |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
+| Query Execution     |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
 | _**Governance**_    |                                             |                                                            |                                             |
 | Contract            |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
 | Document Store      |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
