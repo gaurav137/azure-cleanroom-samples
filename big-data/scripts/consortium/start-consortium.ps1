@@ -153,7 +153,6 @@ else {
             --name $ccfName `
             --node-log-level "Info" `
             --security-policy-creation-option $option `
-            --security-policy "" `
             --infra-type "caci" `
             --operator-recovery-encryption-private-key $ccfOperatorEncryptionKey `
             --previous-service-cert $serviceCert `
