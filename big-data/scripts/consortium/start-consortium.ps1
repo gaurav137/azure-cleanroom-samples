@@ -132,6 +132,34 @@ else {
     $ccfUri = $ccf.endpoint
     Write-Log Warning `
         "Connected to existing CCF network '$ccfName' ('$ccfUri')."
+
+    $health = (az cleanroom ccf network show-health `
+            --name $ccfName `
+            --provider-config $privateDir/ccfProviderConfig.json `
+            --provider-client $ccfProviderClient | ConvertFrom-Json)
+    if ($health.nodeHealth[0].status -eq "NeedsReplacement") {
+        Write-Log Error "CCF network needs to be recovered. Initiating recovery..."
+        $option = "cached-debug"
+        $ccfOperatorEncryptionKey = $secretDir + "/" + $ccfOperator + "_enc_privk.pem"
+        $serviceCertFileName = "${ccfName}_service_cert.pem"
+        $serviceCert = "$publicDir/$serviceCertFileName"
+        Write-Log Verbose `
+            "Recovering CCF network '$ccfName' in '$resourceGroup'..."
+        az cleanroom ccf provider configure `
+            --name $ccfProviderClient `
+            --signing-cert "$secretDir/$($ccfOperator)_cert.pem" `
+            --signing-key "$secretDir/$($ccfOperator)_privk.pem"
+        az cleanroom ccf network recover `
+            --name $ccfName `
+            --node-log-level "Info" `
+            --security-policy-creation-option $option `
+            --security-policy "" `
+            --infra-type "caci" `
+            --operator-recovery-encryption-private-key $ccfOperatorEncryptionKey `
+            --previous-service-cert $serviceCert `
+            --provider-config $privateDir/ccfProviderConfig.json `
+            --provider-client $ccfProviderClient
+    }
 }
 
 $response = (curl "$ccfUri/node/network" -k --silent | ConvertFrom-Json)

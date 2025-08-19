@@ -30,10 +30,22 @@ $envVarsClientDeploy = @{
     "AZCLI_CGS_UI_IMAGE"     = "$repo/cgs-ui:$tag"
 }
 
+#
+# Connect to CCF using service cert discovery. This transparently handles CCF network restart/recovery performed by the operator.
+#
+$agent = Get-Content $publicDir/ccf.recovery-agent.json | ConvertFrom-Json
+$agentEndpoint = $agent.endpoint
+$agentNetworkReport = curl -k -s -S $agentEndpoint/network/report | ConvertFrom-Json
+$reportDataContent = $agentNetworkReport.reportDataPayload | base64 -d | ConvertFrom-Json
+$serviceCertDiscoveryArgs = "--service-cert-discovery-endpoint $agentEndpoint/network/report " + 
+"--service-cert-discovery-snp-host-data $($agent.snpHostData) " + 
+"--service-cert-discovery-constitution-digest $($reportDataContent.constitutionDigest) " +
+"--service-cert-discovery-jsapp-bundle-digest $($reportDataContent.jsappBundleDigest) "
+
 $cgsMsalTokenCacheDir = $env:HOST_PERSONA_PRIVATE_DIR + "/$cgsClient"
 # Deploy client-side containers to interact with the governance service as the new user.
 Start-Process az `
-    -ArgumentList "cleanroom governance client deploy --ccf-endpoint $($ccfEndpoint.url) --use-microsoft-identity --msal-token-cache-root-dir $privateDir --cgs-msal-token-cache-dir $cgsMsalTokenCacheDir --service-cert $publicDir/$($ccfEndpoint.serviceCert) --name $cgsClient" `
+    -ArgumentList "cleanroom governance client deploy --ccf-endpoint $($ccfEndpoint.url) --use-microsoft-identity --msal-token-cache-root-dir $privateDir --cgs-msal-token-cache-dir $cgsMsalTokenCacheDir $serviceCertDiscoveryArgs --name $cgsClient" `
     -Environment $envVarsClientDeploy `
     -Wait
 
