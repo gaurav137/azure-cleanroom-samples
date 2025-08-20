@@ -27,6 +27,7 @@ Import-Module $PSScriptRoot/../azure-helpers/azure-helpers.psm1 -Force -DisableN
 if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
     Write-Log Verbose `
         "No grant access step required for '$persona' for '$demo' demo..."
+    return
 }
 
 Test-AzureAccessToken

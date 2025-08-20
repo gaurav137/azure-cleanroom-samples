@@ -30,8 +30,6 @@ $PSNativeCommandUseErrorActionPreference = $true
 
 Import-Module $PSScriptRoot/../common/common.psm1
 
-Test-AzureAccessToken
-
 if ($sa -eq "") {
     $initResult = Get-Content $environmentConfig | ConvertFrom-Json
     $sa = $initResult.datasa.id
@@ -61,6 +59,9 @@ if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
             --governance-client $cgsClient `
             --query "secretId" `
             --output tsv)
+}
+else {
+    Test-AzureAccessToken
 }
 
 if (Test-Path -Path "$demoPath/generate-data.ps1") {
