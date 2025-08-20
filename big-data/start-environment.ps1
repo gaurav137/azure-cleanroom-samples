@@ -197,7 +197,10 @@ if ($persona -eq "operator") {
             "AZCLI_CCF_PROVIDER_NETWORK_SECURITY_POLICY_DOCUMENT_URL"          = "$repo/policies/ccf/ccf-network-security-policy:$tag"
             "AZCLI_CCF_PROVIDER_RECOVERY_SERVICE_SECURITY_POLICY_DOCUMENT_URL" = "$repo/policies/ccf/ccf-recovery-service-security-policy:$tag"
         }
-        Start-Process docker -ArgumentList "compose -p $ccfProviderName -f $dockerFileDir/ccf/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait
+        $proc = Start-Process docker -ArgumentList "compose -p $ccfProviderName -f $dockerFileDir/ccf/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait -PassThru
+        if (0 -ne $proc.ExitCode) {
+            throw "Command failed."
+        }
 
         $providerPort = (docker compose -p $ccfProviderName port "client" 8080).Split(':')[1]
         Write-Log OperationCompleted `
@@ -230,7 +233,10 @@ if ($persona -eq "operator") {
             "AZCLI_CLEANROOM_ANALYTICS_APP_IMAGE_URL"                                             = "$repo/workloads/cleanroom-spark-analytics-app:$tag"
             "AZCLI_CLEANROOM_ANALYTICS_APP_IMAGE_POLICY_DOCUMENT_URL"                             = "$repo/policies/workloads/cleanroom-spark-analytics-app-security-policy:$tag"
         }
-        Start-Process docker -ArgumentList "compose -p $cleanroomClusterProviderName -f $dockerFileDir/cleanroom-cluster/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait
+        $proc = Start-Process docker -ArgumentList "compose -p $cleanroomClusterProviderName -f $dockerFileDir/cleanroom-cluster/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait -PassThru
+        if (0 -ne $proc.ExitCode) {
+            throw "Command failed."
+        }
 
         $providerPort = (docker compose -p $cleanroomClusterProviderName port "client" 8080).Split(':')[1]
         Write-Log OperationCompleted `
@@ -283,7 +289,10 @@ if ($persona -eq "operator") {
             $dockerArgs += " --build-arg EXTENSION_TAG=$tag"
             $dockerArgs += " --build-arg EXTENSION_FILENAME=$fileName"
         }
-        Start-Process docker $dockerArgs -Wait
+        $proc = Start-Process docker $dockerArgs -Wait -PassThru
+        if (0 -ne $proc.ExitCode) {
+            throw "Command failed."
+        }
 
         if ($resourceGroup -eq "") {
             $resourceGroup = "$persona-$((New-Guid).ToString().Substring(0, 8))"

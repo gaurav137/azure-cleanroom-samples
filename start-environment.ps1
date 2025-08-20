@@ -213,7 +213,10 @@ if ($persona -eq "operator") {
                 "Using custom az cli extensions: $customCliExtensions..."
             $dockerArgs += " --build-arg EXTENSION_SOURCE=local"
         }
-        Start-Process docker $dockerArgs -Wait
+        Start-Process docker $dockerArgs -Wait -PassThru
+        if (0 -ne $proc.ExitCode) {
+            throw "Command failed."
+        }
 
         if ($resourceGroup -eq "") {
             $resourceGroup = "$persona-$((New-Guid).ToString().Substring(0, 8))"

@@ -181,10 +181,14 @@ $envVarsClientDeploy = @{
     $ccfOperatorClient = "azure-cleanroom-samples-governance-client-$ccfOperator"
     Write-Log Verbose `
         "Deploying governance client '$ccfOperatorClient'..."
-    Start-Process az `
+    $proc = Start-Process az `
         -ArgumentList "cleanroom governance client deploy --ccf-endpoint $ccfUri --signing-cert $secretDir/$($ccfOperator)_cert.pem --signing-key $secretDir/$($ccfOperator)_privk.pem --service-cert $publicDir/$serviceCert --name $ccfOperatorClient" `
         -Environment $envVarsClientDeploy  `
-        -Wait
+        -Wait `
+        -PassThru
+    if (0 -ne $proc.ExitCode) {
+        throw "Command failed."
+    }
     az cleanroom governance member activate --governance-client $ccfOperatorClient
 
     # Setting up Microsoft IDPs as trusted JWT token issuers for user identity.
@@ -254,10 +258,14 @@ $snpHostData = az cleanroom ccf network show-report `
     # and accept the invitation.
     Write-Log Verbose `
         "Deploying governance client '$cgsClient'..."
-    Start-Process az `
+    $proc = Start-Process az `
         -ArgumentList "cleanroom governance client deploy --ccf-endpoint $ccfUri --signing-cert $secretDir/$($persona)_cert.pem --signing-key $secretDir/$($persona)_privk.pem --service-cert $publicDir/$serviceCert --name $cgsClient" `
         -Environment $envVarsClientDeploy `
-        -Wait
+        -Wait `
+        -PassThru
+    if (0 -ne $proc.ExitCode) {
+        throw "Command failed."    
+    }
     az cleanroom governance member activate --governance-client $cgsClient
 
     Write-Log OperationCompleted `
@@ -275,10 +283,14 @@ $envVarsServiceDeploy = @{
 # Deploy governance service on the CCF instance.
 Write-Log Verbose `
     "Deploying Clean Room Governance Service to '$ccfName'..."
-Start-Process az `
+$proc = Start-Process az `
     -ArgumentList "cleanroom governance service deploy --governance-client $cgsClient" `
     -Environment $envVarsServiceDeploy `
-    -Wait
+    -Wait `
+    -PassThru
+if (0 -ne $proc.ExitCode) {
+    throw "Command failed."
+}
 
 # Share the CCF endpoint details.
 $result = @{

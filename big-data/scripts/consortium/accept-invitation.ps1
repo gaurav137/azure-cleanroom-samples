@@ -44,10 +44,14 @@ $serviceCertDiscoveryArgs = "--service-cert-discovery-endpoint $agentEndpoint/ne
 
 $cgsMsalTokenCacheDir = $env:HOST_PERSONA_PRIVATE_DIR + "/$cgsClient"
 # Deploy client-side containers to interact with the governance service as the new user.
-Start-Process az `
+$proc = Start-Process az `
     -ArgumentList "cleanroom governance client deploy --ccf-endpoint $($ccfEndpoint.url) --use-microsoft-identity --msal-token-cache-root-dir $privateDir --cgs-msal-token-cache-dir $cgsMsalTokenCacheDir $serviceCertDiscoveryArgs --name $cgsClient" `
     -Environment $envVarsClientDeploy `
-    -Wait
+    -Wait `
+    -PassThru
+if (0 -ne $proc.ExitCode) {
+    throw "Command failed."
+}
 
 # Accept the invitation and becomes an active member in the consortium.
 $invitationId = Get-Content "$publicDir/$persona.invitation-id"
