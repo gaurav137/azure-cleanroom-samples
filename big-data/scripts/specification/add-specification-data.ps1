@@ -10,7 +10,7 @@ param(
     [string]$demosRoot = "$samplesRoot/demos",
 
     [string]$contractConfig = "$privateDir/$resourceGroup-$demo.generated.json",
-    [string]$environmentConfig = "$privateDir/$resourceGroup.generated.json",
+    [string]$environmentConfig = "$privateDir/$resourceGroup-$demo.generated.json",
     [string]$secretstoreConfig = "$privateDir/secretstores.config",
     [string]$datastoreConfig = "$privateDir/datastores.config",
     [string]$datasourcePath = "$demosRoot/$demo/datasource/$persona",
