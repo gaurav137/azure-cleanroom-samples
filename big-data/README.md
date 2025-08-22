@@ -21,7 +21,7 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
   - [Invite users to the consortium (operator)](#invite-users-to-the-consortium-operator)
   - [Accepting invitations (northwind, woodgrove)](#accepting-invitations-northwind-woodgrove)
 - [Publishing data](#publishing-data)
-  - [CSE: KEK-DEK based encryption approach](#cse-kek-dek-based-encryption-approach)
+  - [CSE: KEK-DEK based encryption approach for Azure Storage](#cse-kek-dek-based-encryption-approach-for-azure-storage)
   - [S3: Setup AWS credentials (woodgrove)](#s3-setup-aws-credentials-woodgrove)
   - [Upload data (northwind, woodgrove)](#upload-data-northwind-woodgrove)
   - [Configure resource access for clean room (northwind, woodgrove)](#configure-resource-access-for-clean-room-northwind-woodgrove)
@@ -257,7 +257,7 @@ With the above steps the consortium creation that drives the creation and execut
 # Publishing data
 Sensitive data that any of the parties want to bring into the collaboration is ideally encrypted in a manner that ensures the key to decrypt this data will only be released to the clean room environment. This encryption is optional in case a collaborator does not want to use Client Side Encryption (CSE) for their data. This demo showcases this approach.
 
-## CSE: KEK-DEK based encryption approach
+## CSE: KEK-DEK based encryption approach for Azure Storage
 The CSE samples follow an envelope encryption model for encryption of data. For the encryption of the data, a symmetric **_Data Encryption Key_** (**DEK**) is generated. An asymmetric key, called the *Key Encryption Key* (KEK), is generated subsequently to wrap the DEK. The wrapped DEKs are stored in a Key Vault as a secret and the KEK is imported into an MHSM/Premium Key Vault behind a secure key release (SKR) policy. Within the clean room, the wrapped DEK is read from the Key Vault and the KEK is retrieved from the MHSM/Premium Key Vault following the secure key release [protocol](https://learn.microsoft.com/en-us/azure/confidential-computing/skr-flow-confidential-containers-azure-container-instance). The DEKs are unwrapped within the cleanroom and then used to access the storage containers.
 
 ### Encrypt and upload data (northwind, woodgrove) <!-- omit from toc -->
