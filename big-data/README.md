@@ -288,7 +288,9 @@ For the S3 demo (`analytics-s3`) AWS credentials needs to be provided that has p
 
 Assuming a user was configured in AWS for this purpose, run the following command to setup the credentials supplying the access key and secret key information:
 ```powershell
-Set-AWSCredential -AccessKey AKIA... -SecretKey wJalrXUtnF... -StoreAs "default"
+$awsAccessKey="AKIA..."
+$awsSecretKey="wJalrXUtnF..."
+Set-AWSCredential -AccessKey $awsAccessKey -SecretKey $awsSecretKey -StoreAs "default"
 ```
 
 ## Upload data (northwind, woodgrove)
