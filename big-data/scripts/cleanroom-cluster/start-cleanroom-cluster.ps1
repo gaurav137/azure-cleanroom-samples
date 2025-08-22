@@ -209,7 +209,7 @@ if ($null -ne $issuerInfo.issuerUrl) {
 }
 else {
     $oidcsa = $environmentConfigResult.oidcsa.name
-    if ($oidcsa -eq "cleanroomoidc") {
+    if ($tenantId -eq "72f988bf-86f1-41af-91ab-2d7cd011db47") {
         Write-Log Verbose `
             "Use pre-provisioned storage account $oidcsa for OIDC setup"
     }
