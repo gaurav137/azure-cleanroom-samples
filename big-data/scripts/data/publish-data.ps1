@@ -28,11 +28,6 @@ $PSNativeCommandUseErrorActionPreference = $true
 
 Import-Module $PSScriptRoot/../common/common.psm1
 
-if ($sa -eq "") {
-    $initResult = Get-Content $environmentConfig | ConvertFrom-Json
-    $sa = $initResult.datasa.id
-}
-
 if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
     $awsCreds = Get-AWSCredential -ProfileName $awsProfileName
     if ($null -eq $awsCreds) {
@@ -65,9 +60,6 @@ else {
 if (Test-Path -Path "$demoPath/generate-data.ps1") {
     & $demoPath/generate-data.ps1
 }
-
-Write-Log OperationStarted `
-    "Creating data stores for '$demo' demo in '$sa'..."
 
 if (Test-Path -Path $datasourcePath) {
     $dirs = Get-ChildItem -Path $datasourcePath -Directory -Name
@@ -108,6 +100,11 @@ if (Test-Path -Path $datasourcePath) {
             Write-S3Object -BucketName $bucketName -Folder $datastorePath -Recurse  -KeyPrefix "/" -Region $region
         }
         else {
+            if ($sa -eq "") {
+                $initResult = Get-Content $environmentConfig | ConvertFrom-Json
+                $sa = $initResult.datasa.id
+            }
+
             az cleanroom datastore add `
                 --name $datastoreName `
                 --config $datastoreConfig `

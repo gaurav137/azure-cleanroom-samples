@@ -10,7 +10,6 @@ param(
     [string]$demosRoot = "$samplesRoot/demos",
 
     [string]$contractConfig = "$privateDir/$resourceGroup-$demo.generated.json",
-    [string]$environmentConfig = "$privateDir/$resourceGroup.generated.json",
     [string]$secretstoreConfig = "$privateDir/secretstores.config",
     [string]$datastoreConfig = "$privateDir/datastores.config",
     [string]$datasourcePath = "$demosRoot/$demo/datasource/$persona",
@@ -24,7 +23,6 @@ $PSNativeCommandUseErrorActionPreference = $true
 Import-Module $PSScriptRoot/../common/common.psm1
 
 $contractConfigResult = Get-Content $contractConfig | ConvertFrom-Json
-$environmentConfigResult = Get-Content $environmentConfig | ConvertFrom-Json
 
 Write-Log OperationStarted `
     "Adding datasources and datasinks for '$persona' in the '$demo' demo to" `
