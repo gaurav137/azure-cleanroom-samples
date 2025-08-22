@@ -1,7 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("cleanroomhello-job", "cleanroomhello-api", "analytics", "inference", "training")]
-    [string]$demo,
+    [string]$demo = "$env:DEMO",
 
     [string]$persona = "$env:PERSONA",
     [string]$resourceGroup = "$env:RESOURCE_GROUP",

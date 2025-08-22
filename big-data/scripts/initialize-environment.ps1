@@ -2,6 +2,7 @@ param(
     [ValidateSet("mhsm", "akvpremium")]
     [string]$kvType = "akvpremium",
 
+    [string]$demo = "$env:DEMO",
     [string]$persona = "$env:PERSONA",
     [string]$resourceGroup = "$env:RESOURCE_GROUP",
     [string]$resourceGroupLocation = "$env:RESOURCE_GROUP_LOCATION",
@@ -38,6 +39,12 @@ if (!$isCollaborator -and !$isOperator) {
 }
 
 Import-Module $PSScriptRoot/azure-helpers/azure-helpers.psm1 -Force -DisableNameChecking
+
+if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+    Write-Log Warning `
+        "No initialization required for '$persona' for '$demo' demo..."
+    return
+}
 
 Write-Log OperationStarted `
     "Logging into Azure..."

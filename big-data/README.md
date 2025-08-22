@@ -78,6 +78,7 @@ Each party requires an independent environment. To create such an environment, o
 
 
 ```powershell
+$demo = # Set to one of: "analytics" "analytics-s3"
 $persona = # Set to one of: "operator" "northwind" "woodgrove"
 ```
 <!-- TODO: Is it worthwhile adding a selector instead?
@@ -97,7 +98,7 @@ $persona = (Choose-Option -options @('operator','litware','northwind','woodgrove
 -->
 
 ```powershell
-./big-data/start-environment.ps1 -shareCredentials -persona $persona
+./big-data/start-environment.ps1 -shareCredentials -persona $persona -demo $demo
 ```
 
 This create a separate docker container for each party that contains an isolated environment, while sharing some host volumes across all of them to simplify sharing 'public' configuration details across parties.
@@ -112,23 +113,14 @@ This create a separate docker container for each party that contains an isolated
 
 ## Initializing the environment
 > [!NOTE]
-> Prerequisites to initialize the environment
-> * An Azure subscription with adequate permissions to create resources and manage permissions on these resources.
+> Prerequisites to initialize the environment:
+> * **_Operator_**: An Azure subscription with adequate permissions to create resources and manage permissions on these resources.
+> * **_Northwind_**: An Azure subscription with adequate permissions to create resources and manage permissions on these resources.
+> * **_Woodgrove_**:  Depends on the demo being performed:  
+>   `analytics`: An Azure subscription with adequate permissions to create resources and manage permissions on these resources.  
+>   `analytics-s3`: An AWS account with an IAM user access key and secret which has adequate permissions to create/read/write S3 buckets.
 
-Once the environment is up, execute the following command to logon to Azure:
-
-```powershell
-az login --identity
-```
-
-The command shows the subscription that will be used for resource creation by the sample scripts.
-
-> [!TIP]
-> - The command defaults to using shared credentials for logon. To use a different set of credentials for, omit the `--identity` switch and follow the device login prompts.
-> - If another subscription is to be used for creating resources, execute `az account set` to select if before executing the remaining steps.
-
-
-Post login, initialize the environment for executing the samples by executing the following command from the `/home/samples` directory for **every** persona:
+Initialize the environment for executing the samples by executing the following command from the `/home/samples` directory for **every** persona:
 
 ```powershell
 ./scripts/initialize-environment.ps1
@@ -289,12 +281,6 @@ sequenceDiagram
     end
 ```
 
-> [!TIP]
-> Set a variable `$demo` to the name of the demo to be executed (_e.g., "**analytics**"_) - it is a required input for subsequent steps.
-> ```powershell
-> $demo = # Set to one of: "analytics", "analytics-s3"
-> ```
-
 ## S3: Setup AWS credentials (woodgrove)
 For the S3 demo (`analytics-s3`) AWS credentials needs to be provided that has permissions to create/read/write buckets. These credentials will be used as follows:
 - By the demo scripts to create buckets and upload data in them.
@@ -310,7 +296,7 @@ Set-AWSCredential -AccessKey AKIA... -SecretKey wJalrXUtnF... -StoreAs "default"
 The following command initializes datastores and uploads encrypted datasets required for executing the samples:
 
 ```powershell
-./scripts/data/publish-data.ps1 -demo $demo
+./scripts/data/publish-data.ps1
 ```
 
 > [!NOTE]
@@ -344,7 +330,7 @@ The managed identities created earlier as part of [publishing the data](#publish
 
 
 ```powershell
-./scripts/contract/grant-cleanroom-access.ps1 -demo $demo
+./scripts/contract/grant-cleanroom-access.ps1
 ```
 
 # Setting up query execution
@@ -354,7 +340,7 @@ The following command adds details about the query to be executed within the cle
 
 
 ```powershell
-./scripts/contract/add-query.ps1 -demo $demo
+./scripts/contract/add-query.ps1
 ```
 
 The query is picked from [query.txt](demos/analytics/query/woodgrove/query1/query.txt).
@@ -367,7 +353,7 @@ From a confidentiality perspective, the query document creation and proposal can
 
 <!--TODO: Add query to figure out the contract ID by hitting CGS.-->
 ```powershell
-./scripts/contract/approve-query.ps1 -demo $demo
+./scripts/contract/approve-query.ps1
 ```
 
 # Using the clean room
@@ -375,7 +361,7 @@ From a confidentiality perspective, the query document creation and proposal can
 The party interested in getting the query results (*woodgrove* in our case) can do so by running the following:
 
 ```powershell
-./scripts/contract/run-query.ps1 -demo $demo
+./scripts/contract/run-query.ps1
 ```
 
 ## View output (woodgrove)

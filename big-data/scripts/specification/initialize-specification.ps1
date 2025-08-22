@@ -1,7 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("analytics", "analytics-s3")]
-    [string]$demo,
+    [string]$demo = "$env:DEMO",
 
     [string]$persona = "$env:PERSONA",
     [string]$resourceGroup = "$env:RESOURCE_GROUP",
@@ -23,8 +21,6 @@ $PSNativeCommandUseErrorActionPreference = $true
 Import-Module $PSScriptRoot/../common/common.psm1
 Import-Module $PSScriptRoot/../azure-helpers/azure-helpers.psm1 -Force -DisableNameChecking
 
-Test-AzureAccessToken
-
 Write-Log OperationStarted `
     "Initializing cleanroom specification '$contractFragment'..." 
 az cleanroom config init `
@@ -35,6 +31,7 @@ if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
         "Skipping any managed identity created for '$persona' for '$demo' demo..."
 }
 else {
+    Test-AzureAccessToken
 
     if ($managedIdentityName -eq "") {
         $uniqueString = Get-UniqueString($resourceGroup)

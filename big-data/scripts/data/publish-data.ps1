@@ -1,7 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("analytics", "analytics-s3")]
-    [string]$demo,
+    [string]$demo = "$env:DEMO",
 
     [string]$persona = "$env:PERSONA",
     [string]$resourceGroup = "$env:RESOURCE_GROUP",

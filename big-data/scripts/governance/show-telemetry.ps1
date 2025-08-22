@@ -1,7 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("cleanroomhello-job", "cleanroomhello-api", "analytics", "inference", "training")]
-    [string]$demo,
+    [string]$demo = "$env:DEMO",
 
     [Parameter(Mandatory = $true)]
     [string]$contractId,
@@ -32,8 +30,7 @@ Import-Module $PSScriptRoot/../common/common.psm1
 $infrastructureDir = "$telemetryDir/infrastructure-telemetry/$contractId"
 $applicationDir = "$telemetryDir/application-telemetry/$contractId"
 
-if ($cleanroomEndpoint -eq '')
-{
+if ($cleanroomEndpoint -eq '') {
     Write-Log Warning `
         "No endpoint details available for cleanroom '$cleanRoomName' at" `
         "'$publicDir/$cleanRoomName.endpoint'."
@@ -56,8 +53,7 @@ if ($response -ne $expectedResponse) {
     exit 1
 }
 
-if ("litware" -eq $persona)
-{
+if ("litware" -eq $persona) {
     Test-AzureAccessToken
 
     $contractConfigResult = Get-Content $contractConfig | ConvertFrom-Json
@@ -94,8 +90,7 @@ if ("litware" -eq $persona)
 }
 
 # Display application logs.
-if (Test-Path $applicationDir/application-telemetry-*/**/demoapp-$demo.log)
-{
+if (Test-Path $applicationDir/application-telemetry-*/**/demoapp-$demo.log) {
     Write-Log Warning `
         "$([environment]::NewLine)Application logs:"
     Write-Log Verbose `
@@ -105,8 +100,7 @@ if (Test-Path $applicationDir/application-telemetry-*/**/demoapp-$demo.log)
     Write-Log Verbose `
         "-----END OUTPUT-----"
 }
-else
-{
+else {
     Write-Log Warning `
         "$([environment]::NewLine)No application logs are available."
 }

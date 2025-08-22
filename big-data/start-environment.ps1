@@ -3,6 +3,10 @@ param(
     [ValidateSet("northwind", "woodgrove", "operator")]
     [string]$persona,
 
+    [Parameter(Mandatory = $true)]
+    [ValidateSet("analytics", "analytics-s3")]
+    [string]$demo,
+
     [string]$resourceGroup = "",
     [string]$resourceGroupLocation = "westus",
 
@@ -111,66 +115,72 @@ New-Item -ItemType Directory -Force -Path "$personaBase/$secretDir"
 #
 # Launch credential proxy for operator or if sharing credentials.
 #
-if ($shareCredentials -or ($persona -eq "operator")) {
-    & {
-        Write-Log OperationStarted `
-            "Setting up credential sharing infrastructure..."
-
-        # Create a bridge network to host the credential proxy.
-        $networkName = "$imageName-network"
-        $network = (docker network ls --filter "name=^$networkName$" --format 'json') | ConvertFrom-Json
-        if ($null -eq $network) {
-            Write-Log Verbose `
-                "Creating docker network '$networkName'..."
-            docker network create $networkName
-        }
-
-        # Bring up a credential proxy container.
-        $containerName = $accessTokenProviderName
-        $container = (docker container ls -a --filter "name=^$containerName$" --format 'json') | ConvertFrom-Json
-        if ($null -eq $container) {
-            # The latest version of the proxy image is giving a JsonDeserialization error.
-            # TODO: Use the latest version of the proxy image once the issue is fixed.
-            $proxyImage = "workleap/azure-cli-credentials-proxy:1.2.5"
-            Write-Log Verbose `
-                "Creating credential proxy '$containerName' using image '$proxyImage'..."
-            docker container create `
-                -p "0:8080" `
-                --network $networkName `
-                --name $containerName `
-                $proxyImage
-        }
-        else {
-            Write-Log Warning `
-                "Reusing existing credential proxy container '$($container.Names)'" `
-                "(ID: $($container.ID))."
-        }
-
-        docker container start $containerName
-
-        # Interactively login to proxy if required.
-        Write-Log Verbose `
-            "Checking validity of Azure access token..."
+if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+    Write-Log Verbose `
+        "No credential sharing infrastructure required for '$persona' for '$demo' demo..."
+}
+else {
+    if ($shareCredentials -or ($persona -eq "operator")) {
         & {
-            # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
-            $PSNativeCommandUseErrorActionPreference = $false
-            $(docker exec $containerName sh -c "az account get-access-token" 1>$null)
-        }
-
-        if (0 -ne $LASTEXITCODE) {
             Write-Log OperationStarted `
-                "Logging into Azure..."
-            docker exec -it $containerName sh -c "az login"
+                "Setting up credential sharing infrastructure..."
+
+            # Create a bridge network to host the credential proxy.
+            $networkName = "$imageName-network"
+            $network = (docker network ls --filter "name=^$networkName$" --format 'json') | ConvertFrom-Json
+            if ($null -eq $network) {
+                Write-Log Verbose `
+                    "Creating docker network '$networkName'..."
+                docker network create $networkName
+            }
+
+            # Bring up a credential proxy container.
+            $containerName = $accessTokenProviderName
+            $container = (docker container ls -a --filter "name=^$containerName$" --format 'json') | ConvertFrom-Json
+            if ($null -eq $container) {
+                # The latest version of the proxy image is giving a JsonDeserialization error.
+                # TODO: Use the latest version of the proxy image once the issue is fixed.
+                $proxyImage = "workleap/azure-cli-credentials-proxy:1.2.5"
+                Write-Log Verbose `
+                    "Creating credential proxy '$containerName' using image '$proxyImage'..."
+                docker container create `
+                    -p "0:8080" `
+                    --network $networkName `
+                    --name $containerName `
+                    $proxyImage
+            }
+            else {
+                Write-Log Warning `
+                    "Reusing existing credential proxy container '$($container.Names)'" `
+                    "(ID: $($container.ID))."
+            }
+
+            docker container start $containerName
+
+            # Interactively login to proxy if required.
+            Write-Log Verbose `
+                "Checking validity of Azure access token..."
+            & {
+                # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
+                $PSNativeCommandUseErrorActionPreference = $false
+                $(docker exec $containerName sh -c "az account get-access-token" 1>$null)
+            }
+
+            if (0 -ne $LASTEXITCODE) {
+                Write-Log OperationStarted `
+                    "Logging into Azure..."
+                docker exec -it $containerName sh -c "az login"
+            }
+
+            docker exec $containerName sh -c "az account show"
         }
 
-        docker exec $containerName sh -c "az account show"
+        # Fetch credential proxy host port details.
+        $credentialProxyPort = (docker port $accessTokenProviderName 8080).Split(':')[1]
+        $credentialProxyEndpoint = "http://host.docker.internal:$credentialProxyPort/token"
+        Write-Log OperationCompleted `
+            "Credential sharing infrastructure deployed at '$credentialProxyEndpoint'."
     }
-
-    # Fetch credential proxy host port details.
-    $credentialProxyPort = (docker port $accessTokenProviderName 8080).Split(':')[1]
-    $credentialProxyEndpoint = "http://host.docker.internal:$credentialProxyPort/token"
-    Write-Log OperationCompleted `
-        "Credential sharing infrastructure deployed at '$credentialProxyEndpoint'."
 }
 
 #
@@ -300,6 +310,7 @@ if ($persona -eq "operator") {
 
         docker container create `
             --env PERSONA=$persona `
+            --env DEMO=$demo `
             --env RESOURCE_GROUP=$resourceGroup `
             --env RESOURCE_GROUP_LOCATION=$resourceGroupLocation `
             --env IDENTITY_ENDPOINT=$credentialProxyEndpoint `

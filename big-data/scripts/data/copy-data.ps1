@@ -1,7 +1,5 @@
 param(
-    [Parameter(Mandatory = $true)]
-    [ValidateSet("cleanroomhello-job", "cleanroomhello-api", "analytics", "inference", "training")]
-    [string]$demo,
+    [string]$demo = "$env:DEMO",
     [string]$persona = "$env:PERSONA",
 
     [string]$samplesRoot = "/home/samples",
@@ -21,11 +19,9 @@ Import-Module $PSScriptRoot/../common/common.psm1
 
 Test-AzureAccessToken
 
-if (Test-Path -Path $datasinkPath)
-{
+if (Test-Path -Path $datasinkPath) {
     $dirs = Get-ChildItem -Path $datasinkPath -Directory -Name
-    foreach ($dir in $dirs)
-    {
+    foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
 
         # TODO: Understand why this is being copied into a nested folder.
@@ -39,8 +35,7 @@ if (Test-Path -Path $datasinkPath)
             "to '$dataDir'."
     }
 }
-else
-{
+else {
     Write-Log Warning `
         "No datasink available for persona '$persona' in demo '$demo'."
 }
