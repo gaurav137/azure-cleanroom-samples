@@ -290,6 +290,8 @@ Assuming a user was configured in AWS for this purpose, run the following comman
 ```powershell
 $awsAccessKey="AKIA..."
 $awsSecretKey="wJalrXUtnF..."
+```
+```powershell
 Set-AWSCredential -AccessKey $awsAccessKey -SecretKey $awsSecretKey -StoreAs "default"
 ```
 
