@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory = $true)]
-    [ValidateSet("northwind", "woodgrove", "operator")]
+    [ValidateSet("northwind", "woodgrove", "operator", IgnoreCase = $false)]
     [string]$persona,
 
     [Parameter(Mandatory = $true)]
