@@ -387,7 +387,7 @@ If you had a running setup that was successfully executing queries and the clien
 **Operator persona**  
 Re-run `start-environment.ps1` followed by `start-consortium.ps1`. Starting the environment will prompt on whether to recreate the environment, choose `N` ie no.
 ```powershell
-./big-data/start-environment.ps1 -resourceGroup <rg name> ...
+./big-data/start-environment.ps1 ...
 ```
 ![alt text](reuse-env.png)
 ```powershell
@@ -397,7 +397,7 @@ Re-run `start-environment.ps1` followed by `start-consortium.ps1`. Starting the 
 **Northwind/Woodgrove persona**  
 Re-run `start-environment.ps1` followed by `accept-invitation.ps1`. Starting the environment will prompt on whether to recreate the environment, choose `N` ie no.
 ```powershell
-./big-data/start-environment.ps1 -resourceGroup <rg name> ...
+./big-data/start-environment.ps1 ...
 ```
 ![alt text](reuse-env.png)
 ```powershell
