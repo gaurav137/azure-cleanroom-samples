@@ -31,6 +31,10 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
 - [Using the clean room](#using-the-clean-room)
   - [Executing the query (woodgrove)](#executing-the-query-woodgrove)
   - [View output (woodgrove)](#view-output-woodgrove)
+- [Troubleshooting](#troubleshooting)
+  - [Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`](#hitting-taskcanceledexception-or-httprequestexception-error-during-run-queryps1)
+  - [The containers backing the various personas stopped. How to re-start them and resume the workflow?](#the-containers-backing-the-various-personas-stopped-how-to-re-start-them-and-resume-the-workflow)
+  - [How do I cleanup the environment to create a brand new/fresh setup?](#how-do-i-cleanup-the-environment-to-create-a-brand-newfresh-setup)
 
 # Overview
 
@@ -351,3 +355,57 @@ The party interested in getting the query results (*woodgrove* in our case) can 
 
 The query execution output is written to the datasinks configured. Check the Azure storage container or S3 bucket to see the output files that would get generated.
 
+# Troubleshooting
+## Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`
+You might encounter the below errors on executing run-query.ps1 while previously it worked successfully:
+```json
+Executing query 'woodgrove-query1-ec6308e0' as 'woodgrove'...
+{
+  "error": {
+    "code": "TaskCanceledException",
+    "message": "The request was canceled due to the configured HttpClient.Timeout of 100 seconds elapsing."
+  }
+}
+or you might see:
+{
+  "error": {
+    "code": "HttpRequestException",
+    "message": "The SSL connection could not be established, see inner exception."
+  }
+}
+```
+This can happen if the CCF instance that backs the consortium got stopped/started. To resolve this issue re-run the following command from the `operator` console:
+
+```powershell
+./scripts/consortium/start-consortium.ps1
+```
+The above script will perform CCF network recovery if its required to bring back the instance. After this is successful try running the query again.
+
+## The containers backing the various personas stopped. How to re-start them and resume the workflow?
+If you had a running setup that was successfully executing queries and the client side containers for one or more personas stopped for any reason then do the following:
+
+**Operator persona**  
+Re-run `start-environment.ps1` followed by `start-consortium.ps1`. Starting the environment will prompt on whether to recreate the environment, choose `N` ie no.
+```powershell
+./big-data/start-environment.ps1 -resourceGroup <rg name> ...
+```
+![alt text](reuse-env.png)
+```powershell
+./scripts/consortium/start-consortium.ps1
+```
+
+**Northwind/Woodgrove persona**  
+Re-run `start-environment.ps1` followed by `accept-invitation.ps1`. Starting the environment will prompt on whether to recreate the environment, choose `N` ie no.
+```powershell
+./big-data/start-environment.ps1 -resourceGroup <rg name> ...
+```
+![alt text](reuse-env.png)
+```powershell
+./scripts/consortium/accept-invitation.ps1
+```
+
+## How do I cleanup the environment to create a brand new/fresh setup?
+```powershell
+sudo git clean -fdx ./demo-resources/
+```
+Above script removes all generated files and folders under the `demo-resources` folder. This will cause creation of new consortium and cleanroom cluster instances for the next run. On running `start-environment.ps1` again if it detects an existing samples environment and prompts to overwrite the container, choose `Y` ie yes.
