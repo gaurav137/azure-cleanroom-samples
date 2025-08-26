@@ -374,7 +374,14 @@ or you might see:
   }
 }
 ```
-This can happen if the CCF instance that backs the consortium got stopped/started. To resolve this issue re-run the following command from the `operator` console:
+This can happen if the CCF instance that backs the consortium got stopped/started. To check this run the `check-consortium` script from the `operator` console:
+```powershell
+./scripts/consortium/check-consortium.ps1
+```
+
+![alt text](ccf-issue.png)
+
+To resolve this issue re-run the following command from the `operator` console:
 
 ```powershell
 ./scripts/consortium/start-consortium.ps1
