@@ -393,16 +393,17 @@ Re-run `start-environment.ps1` followed by `start-consortium.ps1`. Starting the 
 ```powershell
 ./scripts/consortium/start-consortium.ps1
 ```
+The `start-consortium` script will re-launch the required client side containers.
 
 **Northwind/Woodgrove persona**  
 Re-run `start-environment.ps1` followed by `accept-invitation.ps1`. Starting the environment will prompt on whether to recreate the environment, choose `N` ie no.
 ```powershell
 ./big-data/start-environment.ps1 ...
 ```
-![alt text](reuse-env.png)
 ```powershell
 ./scripts/consortium/accept-invitation.ps1
 ```
+The `accept-invitation` script will re-launch the required client side containers.
 
 ## How do I cleanup the environment to create a brand new/fresh setup?
 ```powershell
