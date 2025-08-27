@@ -118,7 +118,7 @@ $reportDataContent = $agentNetworkReport.reportDataPayload | base64 -d | Convert
 # Propose a contract for the cleanroom cluster analytics deployment.
 if ($contractId -eq "") {
     $contractId = Get-Content $publicDir/analytics.contract-id -ErrorAction SilentlyContinue
-    if ($contractId -eq "") {
+    if ($null -eq $contractId) {
         $contractId = "analytics-$((New-Guid).ToString().Substring(0, 8))"
     }
 }
@@ -149,8 +149,11 @@ $recoveryMembers = az cleanroom governance member show --governance-client $cgsC
 if ($null -eq $contract) {
     $data = Get-Content -Raw $privateDir/contract.json
     Write-Output "Creating contract '$contractId'..."
-    $contract = (az cleanroom governance contract create `
-            --data "$data" `
+    az cleanroom governance contract create `
+        --data "$data" `
+        --id $contractId `
+        --governance-client $cgsClient
+    $contract = (az cleanroom governance contract show `
             --id $contractId `
             --governance-client $cgsClient | ConvertFrom-Json)
 }
