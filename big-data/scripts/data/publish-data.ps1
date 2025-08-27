@@ -10,6 +10,7 @@ param(
     [string]$secretDir = "$samplesRoot/demo-resources/secret",
     [string]$demosRoot = "$samplesRoot/demos",
     [string]$sa = "",
+    [switch]$skipUpload,
     [string]$awsProfileName = "default",
     [string]$cgsClient = "azure-cleanroom-samples-governance-client-$persona",
 
@@ -57,10 +58,6 @@ else {
     Test-AzureAccessToken
 }
 
-if (Test-Path -Path "$demoPath/generate-data.ps1") {
-    & $demoPath/generate-data.ps1
-}
-
 if (Test-Path -Path $datasourcePath) {
     $dirs = Get-ChildItem -Path $datasourcePath -Directory -Name
     foreach ($dir in $dirs) {
@@ -96,8 +93,10 @@ if (Test-Path -Path $datasourcePath) {
             Write-Log OperationCompleted `
                 "Created data store '$datastoreName' backed by S3 bucket '$bucketName'."
 
-            cp -r $datasourcePath/$dir/* $datastorePath
-            Write-S3Object -BucketName $bucketName -Folder $datastorePath -Recurse  -KeyPrefix "/" -Region $region
+            if (!$skipUpload) {
+                cp -r $datasourcePath/$dir/* $datastorePath
+                Write-S3Object -BucketName $bucketName -Folder $datastorePath -Recurse  -KeyPrefix "/" -Region $region
+            }
         }
         else {
             if ($sa -eq "") {
@@ -118,11 +117,13 @@ if (Test-Path -Path $datasourcePath) {
             Write-Log OperationCompleted `
                 "Created data store '$datastoreName' backed by '$sa'."
 
-            cp -r $datasourcePath/$dir/* $datastorePath
-            az cleanroom datastore upload `
-                --name $datastoreName `
-                --config $datastoreConfig `
-                --src $datastorePath
+            if (!$skipUpload) {
+                cp -r $datasourcePath/$dir/* $datastorePath
+                az cleanroom datastore upload `
+                    --name $datastoreName `
+                    --config $datastoreConfig `
+                    --src $datastorePath
+            }
         }
         Write-Log OperationCompleted `
             "Published data from '$datasourcePath/$dir' as data store '$datastoreName'."

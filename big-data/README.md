@@ -289,6 +289,12 @@ Set-AWSCredential -AccessKey $awsAccessKey -SecretKey $awsSecretKey -StoreAs "de
 
 ## Upload data (northwind, woodgrove)
 
+The following command downloads demo data content that will be consumed by the query execution:
+
+```powershell
+./scripts/data/generate-data.ps1
+```
+
 The following command initializes datastores and uploads encrypted datasets required for executing the samples:
 
 ```powershell

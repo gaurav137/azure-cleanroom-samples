@@ -144,7 +144,7 @@ else {
                 Write-Log Verbose `
                     "Creating credential proxy '$containerName' using image '$proxyImage'..."
                 docker container create `
-                    -p "0:8080" `
+                    -p "32768:8080" `
                     --network $networkName `
                     --name $containerName `
                     $proxyImage
