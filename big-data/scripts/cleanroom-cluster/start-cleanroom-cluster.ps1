@@ -117,7 +117,18 @@ $reportDataContent = $agentNetworkReport.reportDataPayload | base64 -d | Convert
 
 # Propose a contract for the cleanroom cluster analytics deployment.
 if ($contractId -eq "") {
-    $contractId = "analytics-$((New-Guid).ToString().Substring(0, 8))"
+    $contractId = Get-Content $publicDir/analytics.contract-id -ErrorAction SilentlyContinue
+    if ($contractId -eq "") {
+        $contractId = "analytics-$((New-Guid).ToString().Substring(0, 8))"
+    }
+}
+
+$contract = & {
+    # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
+    $PSNativeCommandUseErrorActionPreference = $false
+    return (az cleanroom governance contract show `
+            --id $contractId `
+            --governance-client $cgsClient | ConvertFrom-Json)
 }
 
 $recoveryMembers = az cleanroom governance member show --governance-client $cgsClient | jq '[.value[] | select(.publicEncryptionKey != null) | .memberId]' -c 
@@ -135,37 +146,59 @@ $recoveryMembers = az cleanroom governance member show --governance-client $cgsC
 }
 "@ > $privateDir/contract.json
 
-$data = Get-Content -Raw $privateDir/contract.json
-Write-Output "Creating contract '$contractId'..."
-az cleanroom governance contract create `
-    --data "$data" `
-    --id $contractId `
-    --governance-client $cgsClient
+if ($null -eq $contract) {
+    $data = Get-Content -Raw $privateDir/contract.json
+    Write-Output "Creating contract '$contractId'..."
+    $contract = (az cleanroom governance contract create `
+            --data "$data" `
+            --id $contractId `
+            --governance-client $cgsClient | ConvertFrom-Json)
+}
+else {
+    Write-Output "Contract '$contractId' already exists."
+    $contract | ConvertTo-Json -Depth 100 | jq
+    $expected = Get-Content $privateDir/contract.json | sha256sum | cut -d ' ' -f 1
+    $actual = $contract.data.TrimEnd("`n") | sha256sum | cut -d ' ' -f 1
+    if ($expected -ne $actual) {
+        throw "Contract data does not match expected data. Expected hash value: $expected, Actual hash value: $actual"
+    }
+}
 
 $contractId | Out-File $publicDir/analytics.contract-id
 
-# Submitting a contract proposal.
-$version = (az cleanroom governance contract show `
+if ($contract.state -eq "Draft") {
+    # Submitting a contract proposal.
+    $version = (az cleanroom governance contract show `
+            --id $contractId `
+            --query "version" `
+            --output tsv `
+            --governance-client $cgsClient)
+
+    az cleanroom governance contract propose `
+        --version $version `
         --id $contractId `
-        --query "version" `
-        --output tsv `
-        --governance-client $cgsClient)
+        --governance-client $cgsClient
+    $contract = (az cleanroom governance contract show `
+            --id $contractId `
+            --governance-client $cgsClient | ConvertFrom-Json)
+}
 
-az cleanroom governance contract propose `
-    --version $version `
-    --id $contractId `
-    --governance-client $cgsClient
-
-$contract = (az cleanroom governance contract show `
+if ($contract.state -eq "Proposed") {
+    # Accept it.
+    az cleanroom governance contract vote `
         --id $contractId `
-        --governance-client $cgsClient | ConvertFrom-Json)
+        --proposal-id $contract.proposalId `
+        --action accept `
+        --governance-client $cgsClient
+    $contract = (az cleanroom governance contract show `
+            --id $contractId `
+            --governance-client $cgsClient | ConvertFrom-Json)
+}
 
-# Accept it.
-az cleanroom governance contract vote `
-    --id $contractId `
-    --proposal-id $contract.proposalId `
-    --action accept `
-    --governance-client $cgsClient
+if ($contract.state -ne "Accepted") {
+    $contract | ConvertTo-Json -Depth 100 | jq
+    throw "Contract should have been in accepted state."
+}
 
 Write-Output "Enabling CA..."
 az cleanroom governance ca propose-enable `
