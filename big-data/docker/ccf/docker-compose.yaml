@@ -1,7 +1,4 @@
 services:
-  # We are forced to have a docker compose even for a single service since az cli commands expect
-  # to find the CCF provider container as part of a compose project and look for a 'client-1'
-  # container within.
   client:
     image: ${AZCLI_CCF_PROVIDER_CLIENT_IMAGE}
     ports:
