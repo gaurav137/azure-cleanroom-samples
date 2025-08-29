@@ -105,7 +105,7 @@ $persona = (Choose-Option -options @('operator','litware','northwind','woodgrove
 ./big-data/start-environment.ps1 -shareCredentials -persona $persona -demo $demo
 ```
 
-This create a separate docker container for each party that contains an isolated environment, while sharing some host volumes across all of them to simplify sharing 'public' configuration details across parties.
+This creates a separate docker container for each party that contains an isolated environment, while sharing some host volumes across all of them to simplify sharing 'public' configuration details across parties.
 
 > [!IMPORTANT]
 > For Azure environment the command configures the environment to use a randomly generated resource group name on every invocation. To control the name, or to reuse an existing resource group, pass it in using the `-resourceGroup` parameter.
@@ -130,8 +130,11 @@ Initialize the environment for executing the samples by executing the following 
 ./scripts/initialize-environment.ps1
 ```
 
+> [!NOTE]
+> For the using an Azure subscription, use the -subscription parameter in the command above to specify the subscription ID.
+
 > [!IMPORTANT]
-> The above script creates an Azure Storage account for OIDC usage when running for the `operator` persona. If you have a pre-configured Azure storage account for OIDC usage then supply that account name for the `operator` persona as follows:  
+> The above script creates an Azure Storage account for OIDC usage when running for the `operator` persona. If you have a pre-configured Azure storage account for OIDC usage then supply that account name for the `operator` persona as follows:
 > ```powershell
 > $storageAccountName = <name>
 > ./scripts/initialize-environment.ps1 -preProvisionedOIDCStorageAccount $storageAccountName
