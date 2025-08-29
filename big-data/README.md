@@ -1,4 +1,4 @@
-# Azure Clean Room Big Data Samples <!-- omit from toc -->
+# [Work In Progress] Azure Clean Room Big Data Samples <!-- omit from toc -->
 
 This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (**CCR**)](https://github.com/Azure/azure-cleanroom) for big data multi-party collaboration.
 
