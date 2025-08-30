@@ -143,7 +143,7 @@ Initialize the environment for executing the samples by executing the following 
 
 Below is an example setup of 3 command prompts in which `start-environment` was executed before and now `initialize-environment` is about to be executed.
 
-![alt text](command-prompts.png)
+![alt text](../assets/command-prompts.png)
 
 This command create the resource group and other Azure resources required for executing the samples such as a storage account, container registry and key vault (Premium).
 
@@ -207,11 +207,11 @@ The _operator_ (who is hosting the cleanroom infra) brings up AKS cluster instan
 The users in the collaboration are identified by their Microsoft account (work/school or Azure account). Their login id (eg `foo@outlook.com`) is required for adding them to the collaboration.
 
 For demo purposes you can create Microsoft accounts by visiting [outlook.com](https://outlook.com), choosing *Sign In* and the *Create one* option.
-![alt text](sign-in.png)
+![alt text](../assets/sign-in.png)
 
-![alt text](create-one.png)
+![alt text](../assets/create-one.png)
 
-![alt text](new-email.png)
+![alt text](../assets/new-email.png)
 
 After signing up for the accounts and choosing the email address each collaborator supplies their Microsoft account details by executing the following command:
 
@@ -400,7 +400,7 @@ This can happen if the CCF instance that backs the consortium got stopped/starte
 ./scripts/consortium/check-consortium.ps1
 ```
 
-![alt text](ccf-issue.png)
+![alt text](../assets/ccf-issue.png)
 
 To resolve this issue re-run the following command from the `operator` console:
 
@@ -417,7 +417,7 @@ Re-run `start-environment.ps1` followed by `start-consortium.ps1`. Starting the 
 ```powershell
 ./big-data/start-environment.ps1 ...
 ```
-![alt text](reuse-env.png)
+![alt text](../assets/reuse-env.png)
 ```powershell
 ./scripts/consortium/start-consortium.ps1
 ```
@@ -440,8 +440,8 @@ Switching demos involves the below steps:
 3. Run `initialize-environment.ps1`.
 4. Then start from the [Publishing Data](#publishing-data) step.
  
-![alt text](change-demo-1.png)
-![alt text](change-demo-2.png)
+![alt text](../assets/change-demo-1.png)
+![alt text](../assets/change-demo-2.png)
 ## How do I cleanup the environment to create a brand new/fresh setup?
 ```powershell
 sudo git clean -fdx ./demo-resources/
