@@ -30,6 +30,7 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
 - [Using the clean room](#using-the-clean-room)
   - [Executing the query (woodgrove)](#executing-the-query-woodgrove)
   - [View output (woodgrove)](#view-output-woodgrove)
+  - [Governance UI (northwind, woodgrove)](#governance-ui-northwind-woodgrove)
 - [Troubleshooting](#troubleshooting)
   - [Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`](#hitting-taskcanceledexception-or-httprequestexception-error-during-run-queryps1)
   - [The containers backing the various personas stopped. How to re-start them and resume the workflow?](#the-containers-backing-the-various-personas-stopped-how-to-re-start-them-and-resume-the-workflow)
@@ -363,6 +364,16 @@ The party interested in getting the query results (*woodgrove* in our case) can 
 ## View output (woodgrove)
 
 The query execution output is written to the datasinks configured. Check the Azure storage container or S3 bucket to see the output files that would get generated.
+
+## Governance UI (northwind, woodgrove)
+
+You can see various artifacts being managed in the consortium by opening the link displayed below by the below script:
+```powershell
+./scripts/consortium/ui.ps1
+```
+```powershell
+Open http://localhost:xxx in your browser to access the governance portal.
+```
 
 # Troubleshooting
 ## Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`

@@ -15,6 +15,7 @@ if (Test-Path -Path "$demoPath/generate-data.ps1") {
     & $demoPath/generate-data.ps1
 }
 else {
-    Write-Log Warning `
+    Write-Log Error `
         "No generate-data.ps1 script found for demo '$demo'."
+    throw "No generate-data.ps1 script found for demo '$demo'."
 }
