@@ -22,7 +22,7 @@ $PSNativeCommandUseErrorActionPreference = $true
 Import-Module $PSScriptRoot/../common/common.psm1
 Import-Module $PSScriptRoot/../azure-helpers/azure-helpers.psm1 -Force -DisableNameChecking
 
-if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
     Write-Log Verbose `
         "No grant access step required for '$persona' for '$demo' demo..."
     return

@@ -4,7 +4,7 @@ param(
     [string]$persona,
 
     [Parameter(Mandatory = $true)]
-    [ValidateSet("analytics", "analytics-s3")]
+    [ValidateSet("analytics-sse", "analytics-s3-sse", "analytics-cpk")]
     [string]$demo,
 
     [string]$resourceGroup = "",
@@ -23,7 +23,7 @@ param(
     [switch]$shareCredentials,
 
     [string]$repo = "cleanroomemuprregistry.azurecr.io",
-    [string]$tag = "17270579547"
+    [string]$tag = "17338480007"
 )
 
 #https://learn.microsoft.com/en-us/powershell/scripting/learn/experimental-features?view=powershell-7.4#psnativecommanderroractionpreference
@@ -115,7 +115,7 @@ New-Item -ItemType Directory -Force -Path "$personaBase/$secretDir"
 #
 # Launch credential proxy for operator or if sharing credentials.
 #
-if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
     Write-Log Verbose `
         "No credential sharing infrastructure required for '$persona' for '$demo' demo..."
 }
@@ -144,7 +144,7 @@ else {
                 Write-Log Verbose `
                     "Creating credential proxy '$containerName' using image '$proxyImage'..."
                 docker container create `
-                    -p "32768:8080" `
+                    -p "0:8080" `
                     --network $networkName `
                     --name $containerName `
                     $proxyImage

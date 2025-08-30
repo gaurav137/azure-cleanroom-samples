@@ -21,7 +21,6 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
   - [Invite users to the consortium (operator)](#invite-users-to-the-consortium-operator)
   - [Accepting invitations (northwind, woodgrove)](#accepting-invitations-northwind-woodgrove)
 - [Publishing data](#publishing-data)
-  - [Azure: KEK-DEK based encryption approach](#azure-kek-dek-based-encryption-approach)
   - [S3: Setup AWS credentials (woodgrove)](#s3-setup-aws-credentials-woodgrove)
   - [Upload data (northwind, woodgrove)](#upload-data-northwind-woodgrove)
   - [Configure resource access for clean room (northwind, woodgrove)](#configure-resource-access-for-clean-room-northwind-woodgrove)
@@ -40,11 +39,11 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
 
 End to end demos showcasing scenario oriented usage:
 
-|                     |                 `analytics`                 |                       `analytics-s3`                       |               `analytics-sse`               |
+|                     |                 `analytics-sse`             |                       `analytics-s3-sse`                   |               `analytics-cpk`               |
 | :------------------ | :-----------------------------------------: | :--------------------------------------------------------: | :-----------------------------------------: |
 | _**Collaboration**_ |                                             |                                                            |                                             |
-| Data Source         | :heavy_check_mark: Azure Blob Storage (CSE) | :heavy_check_mark: Azure Blob Storage (CSE) & AWS S3 (SSE) | :heavy_check_mark: Azure Blob Storage (SSE) |
-| Data Sink           | :heavy_check_mark: Azure Blob Storage (CSE) |              :heavy_check_mark: AWS S3 (SSE)               | :heavy_check_mark: Azure Blob Storage (SSE) |
+| Data Source         | :heavy_check_mark: Azure Blob Storage (SSE) | :heavy_check_mark: Azure Blob Storage (SSE) & AWS S3 (SSE) | :heavy_check_mark: Azure Blob Storage (CPK) |
+| Data Sink           | :heavy_check_mark: Azure Blob Storage (SSE) |              :heavy_check_mark: AWS S3 (SSE)               | :heavy_check_mark: Azure Blob Storage (CPK) |
 | Data Access         |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
 | Query Execution     |             :heavy_check_mark:              |                     :heavy_check_mark:                     |             :heavy_check_mark:              |
 | _**Governance**_    |                                             |                                                            |                                             |
@@ -82,7 +81,7 @@ Each party requires an independent environment. To create such an environment, o
 
 
 ```powershell
-$demo = # Set to one of: "analytics" "analytics-s3"
+$demo = # Set to one of: "analytics-sse" "analytics-s3-sse" "analytics-cpk"
 $persona = # Set to one of: "operator" "northwind" "woodgrove"
 ```
 <!-- TODO: Is it worthwhile adding a selector instead?
@@ -121,8 +120,8 @@ This creates a separate docker container for each party that contains an isolate
 > * **_Operator_**: An Azure subscription with adequate permissions to create resources and manage permissions on these resources.
 > * **_Northwind_**: An Azure subscription with adequate permissions to create resources and manage permissions on these resources.
 > * **_Woodgrove_**:  Depends on the demo being performed:  
->   `analytics`: An Azure subscription with adequate permissions to create resources and manage permissions on these resources.  
->   `analytics-s3`: An AWS account with an IAM user access key and secret which has adequate permissions to create/read/write S3 buckets.
+>   `analytics-sse/analytics-cpk`: An Azure subscription with adequate permissions to create resources and manage permissions on these resources.  
+>   `analytics-s3-sse`: An AWS account with an IAM user access key and secret which has adequate permissions to create/read/write S3 buckets.
 
 Initialize the environment for executing the samples by executing the following command from the `/home/samples` directory for **every** persona:
 
@@ -131,7 +130,7 @@ Initialize the environment for executing the samples by executing the following 
 ```
 
 > [!NOTE]
-> For the using an Azure subscription, use the -subscription parameter in the command above to specify the subscription ID.
+> For using a specific Azure subscription, use the `-subscription` parameter in the command above to specify the subscription ID.
 
 > [!IMPORTANT]
 > The above script creates an Azure Storage account for OIDC usage when running for the `operator` persona. If you have a pre-configured Azure storage account for OIDC usage then supply that account name for the `operator` persona as follows:
@@ -250,16 +249,17 @@ With the above steps the consortium creation that drives the creation and execut
 > In the default sample environment, the containers for all participants have their `/home/samples/demo-resources/public` mapped to a single host directory, so details about the CCF endpoint would be available to all parties automatically once generated by the _operator_. If the configuration has been changed, the CCF details needs to made available in `/home/samples/demo-resources/public` of each member before executing subsequent steps.
 
 # Publishing data
-Sensitive data that any of the parties want to bring into the collaboration is ideally encrypted in a manner that ensures the key to decrypt this data will only be released to the clean room environment. This encryption is optional in case a collaborator does not want to use Client Side Encryption (CSE) for their data. This demo showcases this approach.
+Sensitive data that any of the parties want to bring into the collaboration is ideally encrypted in a manner that ensures the key to decrypt this data will only be released to the clean room environment. This encryption is optional in case a collaborator does not want to use Client Side Encryption (CSE) for their data. This demo showcases the approach of using SSE and CPK. It does not yet demonstrate CSE.
 
-## Azure: KEK-DEK based encryption approach
+<!-- ## Azure: KEK-DEK based encryption approach
 The CSE samples for Azure storage follow an envelope encryption model for encryption of data. For the encryption of the data, a symmetric **_Data Encryption Key_** (**DEK**) is generated. An asymmetric key, called the *Key Encryption Key* (KEK), is generated subsequently to wrap the DEK. The wrapped DEKs are stored in a Key Vault as a secret and the KEK is imported into an MHSM/Premium Key Vault behind a secure key release (SKR) policy. Within the clean room, the wrapped DEK is read from the Key Vault and the KEK is retrieved from the MHSM/Premium Key Vault following the secure key release [protocol](https://learn.microsoft.com/en-us/azure/confidential-computing/skr-flow-confidential-containers-azure-container-instance). The DEKs are unwrapped within the cleanroom and then used to access the storage containers.
+-->
+<!-- ### Encrypt and upload data (northwind, woodgrove) <!-- omit from toc -->
+<!-- It is assumed that the collaborators have had out-of-band communication and have agreed on the data sets that will be shared. In these samples, the protected data is in the form of one or more files in one or more directories at each collaborators end.
 
-### Encrypt and upload data (northwind, woodgrove) <!-- omit from toc -->
-It is assumed that the collaborators have had out-of-band communication and have agreed on the data sets that will be shared. In these samples, the protected data is in the form of one or more files in one or more directories at each collaborators end.
-
-For the CSE capability demo, these dataset(s) in the form of files are encrypted using the [KEK-DEK](#kek-dek-based-encryption-approach) approach and uploaded into the storage account created as part of [initializing the sample environment](#initializing-the-environment). Each directory in the source dataset would correspond to one Azure Blob storage container, and all files in the directory are uploaded as blobs to Azure Storage using specified encryption mode - client-side encryption <!-- TODO: Add link to explanation of CSE. -->/ server-side encryption using [customer provided key](https://learn.microsoft.com/azure/storage/blobs/encryption-customer-provided-keys). Only one symmetric key (DEK) is created per directory (blob storage container).
-
+For the CSE capability demo, these dataset(s) in the form of files are encrypted using the [KEK-DEK](#kek-dek-based-encryption-approach) approach and uploaded into the storage account created as part of [initializing the sample environment](#initializing-the-environment). Each directory in the source dataset would correspond to one Azure Blob storage container, and all files in the directory are uploaded as blobs to Azure Storage using specified encryption mode - client-side encryption <!-- TODO: Add link to explanation of CSE. -->
+<!-- / server-side encryption using [customer provided key](https://learn.microsoft.com/azure/storage/blobs/encryption-customer-provided-keys). Only one symmetric key (DEK) is created per directory (blob storage container).-->
+<!--
 ```mermaid
 sequenceDiagram
     title Encrypting and uploading data to Azure Storage
@@ -275,7 +275,7 @@ sequenceDiagram
         end
     end
 ```
-
+-->
 ## S3: Setup AWS credentials (woodgrove)
 For the S3 demo (`analytics-s3`) AWS credentials needs to be provided that has permissions to create/read/write buckets. These credentials will be used as follows:
 - By the demo scripts to create buckets and upload data in them.

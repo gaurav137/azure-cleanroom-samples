@@ -29,7 +29,7 @@ $PSNativeCommandUseErrorActionPreference = $true
 
 Import-Module $PSScriptRoot/../common/common.psm1
 
-if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
     $awsCreds = Get-AWSCredential -ProfileName $awsProfileName
     if ($null -eq $awsCreds) {
         throw "AWS credentials not found for profile '$awsProfileName'. Ensure the profile is configured correctly."
@@ -65,7 +65,7 @@ if (Test-Path -Path $datasourcePath) {
         Write-Log Verbose `
             "Enumerated datasource '$datastoreName' in '$datasourcePath'..."
 
-        if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+        if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
             $user = $env:USER
             $bucketName = "$datastoreName-${user}" -replace "_", "-"
             $region = "us-west-1"
@@ -104,14 +104,28 @@ if (Test-Path -Path $datasourcePath) {
                 $sa = $initResult.datasa.id
             }
 
-            az cleanroom datastore add `
-                --name $datastoreName `
-                --config $datastoreConfig `
-                --secretstore-config $secretStoreConfig `
-                --secretstore $persona-local-store `
-                --encryption-mode CPK `
-                --backingstore-type Azure_BlobStorage `
-                --backingstore-id $sa
+            if ($demo -eq "analytics-cpk") {
+                az cleanroom datastore add `
+                    --name $datastoreName `
+                    --config $datastoreConfig `
+                    --secretstore-config $secretStoreConfig `
+                    --secretstore $persona-local-store `
+                    --encryption-mode CPK `
+                    --backingstore-type Azure_BlobStorage `
+                    --backingstore-id $sa
+            }
+            elseif ($demo -eq "analytics-sse" -or $demo -eq "analytics-s3-sse") {
+                az cleanroom datastore add `
+                    --name $datastoreName `
+                    --config $datastoreConfig `
+                    --encryption-mode SSE `
+                    --backingstore-type Azure_BlobStorage `
+                    --backingstore-id $sa                
+            }
+            else {
+                throw "Demo $demo not handled in publish-data. Fix this."
+            }
+
             $datastorePath = "$datastoreDir/$datastoreName"
             mkdir -p $datastorePath
             Write-Log OperationCompleted `
@@ -141,7 +155,7 @@ if (Test-Path -Path $datasinkPath) {
         Write-Log Verbose `
             "Enumerated datasink '$datastoreName' in '$datasinkPath'..."
 
-        if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+        if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
             $user = $env:CODESPACES -eq "true" ? $env:GITHUB_USER : $env:USER
             $bucketName = "$datastoreName-${user}" -replace "_", "-"
             $region = "us-west-1"
@@ -167,14 +181,28 @@ if (Test-Path -Path $datasinkPath) {
                 "Created data store '$datastoreName' backed by S3 bucket '$bucketName'."
         }
         else {
-            az cleanroom datastore add `
-                --name $datastoreName `
-                --config $datastoreConfig `
-                --secretstore-config $secretStoreConfig `
-                --secretstore $persona-local-store `
-                --encryption-mode CPK `
-                --backingstore-type Azure_BlobStorage `
-                --backingstore-id $sa
+            if ($demo -eq "analytics-cpk") {
+                az cleanroom datastore add `
+                    --name $datastoreName `
+                    --config $datastoreConfig `
+                    --secretstore-config $secretStoreConfig `
+                    --secretstore $persona-local-store `
+                    --encryption-mode CPK `
+                    --backingstore-type Azure_BlobStorage `
+                    --backingstore-id $sa
+            }
+            elseif ($demo -eq "analytics-sse" -or $demo -eq "analytics-s3-sse") {
+                az cleanroom datastore add `
+                    --name $datastoreName `
+                    --config $datastoreConfig `
+                    --encryption-mode SSE `
+                    --backingstore-type Azure_BlobStorage `
+                    --backingstore-id $sa
+            }
+            else {
+                throw "Demo $demo not handled in publish-data. Fix this."
+            }
+
             $datastorePath = "$datastoreDir/$datastoreName"
             mkdir -p $datastorePath
             Write-Log OperationCompleted `

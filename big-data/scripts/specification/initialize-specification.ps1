@@ -26,7 +26,7 @@ Write-Log OperationStarted `
 az cleanroom config init `
     --cleanroom-config $contractFragment
 
-if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3") {
+if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
     Write-Log Verbose `
         "Skipping any managed identity created for '$persona' for '$demo' demo..."
 }
