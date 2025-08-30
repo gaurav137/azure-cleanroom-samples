@@ -317,7 +317,7 @@ The following command initializes datastores and uploads encrypted datasets requ
 > <a name="MountPoints"></a>
 > During clean room execution, the datasources and datasinks get presented to the application as file system mount points using the [Azure Storage Blosefuse](https://github.com/Azure/azure-storage-fuse/tree/main?tab=readme-ov-file#about) driver or the [s3fs fuse](https://github.com/s3fs-fuse/s3fs-fuse) driver.
 >
-> The application reads/writes data from/to these mountpoint(s) in clear text. If CSE is configured (for Azure blob storage) then under the hood, the storage system is configured to handle all the cryptography semantics, and transparently decrypts/encrypt the data using the [DEK](#61-kek-dek-based-encryption-approach) corresponding to each datastore.
+> The application reads/writes data from/to these mountpoint(s) in clear text. If CSE is configured (for Azure blob storage) then under the hood, the storage system is configured to handle all the cryptography semantics, and transparently decrypts/encrypt the data using the DEK corresponding to each datastore.
 
 ## Configure resource access for clean room (northwind, woodgrove)
 All the collaborating parties need to give access to the clean room so that the clean room environment can access resources in their respective tenants.
