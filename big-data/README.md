@@ -440,7 +440,8 @@ Switching demos involves the below steps:
 3. Run `initialize-environment.ps1`.
 4. Then start from the [Publishing Data](#publishing-data) step.
  
-![alt text](change-demo-1.png)  
+![alt text](change-demo-1.png)
+![alt text](image.png)
 ![alt text](change-demo-2.png)
 ## How do I cleanup the environment to create a brand new/fresh setup?
 ```powershell
