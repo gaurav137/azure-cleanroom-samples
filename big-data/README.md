@@ -34,6 +34,7 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
 - [Troubleshooting](#troubleshooting)
   - [Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`](#hitting-taskcanceledexception-or-httprequestexception-error-during-run-queryps1)
   - [The containers backing the various personas stopped. How to re-start them and resume the workflow?](#the-containers-backing-the-various-personas-stopped-how-to-re-start-them-and-resume-the-workflow)
+  - [How do I switch between demos? (northwind, woodgrove)](#how-do-i-switch-between-demos-northwind-woodgrove)
   - [How do I cleanup the environment to create a brand new/fresh setup?](#how-do-i-cleanup-the-environment-to-create-a-brand-newfresh-setup)
 
 # Overview
@@ -432,6 +433,15 @@ Re-run `start-environment.ps1` followed by `accept-invitation.ps1`. Starting the
 ```
 The `accept-invitation` script will re-launch the required client side containers.
 
+## How do I switch between demos? (northwind, woodgrove)
+Switching demos involves the below steps:
+1. Exit the persona specific environment.
+2. Run `start-enviroment.ps1` again with the new desired value for `-demo` parameter.
+3. Run `initialize-environment.ps1`.
+4. Then start from the [Publishing Data](#publishing-data) step.
+ 
+![alt text](change-demo-1.png)  
+![alt text](change-demo-2.png)
 ## How do I cleanup the environment to create a brand new/fresh setup?
 ```powershell
 sudo git clean -fdx ./demo-resources/
