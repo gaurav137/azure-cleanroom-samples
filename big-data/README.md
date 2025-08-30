@@ -277,7 +277,7 @@ sequenceDiagram
 ```
 -->
 ## S3: Setup AWS credentials (woodgrove)
-For the S3 demo (`analytics-s3`) AWS credentials needs to be provided that has permissions to create/read/write buckets. These credentials will be used as follows:
+For the S3 demo (`analytics-s3-sse`) AWS credentials needs to be provided that has permissions to create/read/write buckets. These credentials will be used as follows:
 - By the demo scripts to create buckets and upload data in them.
 - By the clean room to access the buckets to read input datasets and create output datasets. A secret in CGS is created to store the credentials to make them available to the clean room.
 

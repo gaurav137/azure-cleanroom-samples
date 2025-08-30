@@ -74,6 +74,8 @@ Write-Log OperationStarted `
     "Creating resource group '$resourceGroup' in '$resourceGroupLocation'..."
 az group create --location $resourceGroupLocation --name $resourceGroup --tags $resourceGroupTags
 
+$resourceGroup | Out-File $privateDir/resourceGroup.name
+
 $result = @{
     kek          = @{}
     dek          = @{}

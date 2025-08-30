@@ -305,7 +305,14 @@ if ($persona -eq "operator") {
         }
 
         if ($resourceGroup -eq "") {
-            $resourceGroup = "$persona-$((New-Guid).ToString().Substring(0, 8))"
+            $resourceGroup = Get-Content $personaBase/$($privateDir)/resourceGroup.name -ErrorAction SilentlyContinue
+            if ($null -eq $resourceGroup) {
+                $resourceGroup = "$persona-$((New-Guid).ToString().Substring(0, 8))"
+            }
+            else {
+                Write-Log Verbose `
+                    "Re-using resource group '$resourceGroup' for '$demo'..."
+            }
         }
 
         docker container create `

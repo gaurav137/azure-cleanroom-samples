@@ -14,3 +14,7 @@ Import-Module $PSScriptRoot/../common/common.psm1
 if (Test-Path -Path "$demoPath/generate-data.ps1") {
     & $demoPath/generate-data.ps1
 }
+else {
+    Write-Log Warning `
+        "No generate-data.ps1 script found for demo '$demo'."
+}
