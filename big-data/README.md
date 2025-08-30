@@ -367,7 +367,7 @@ The query execution output is written to the datasinks configured. Check the Azu
 
 ## Governance UI (northwind, woodgrove)
 
-You can see various artifacts being managed in the consortium by opening the link displayed below by the below script:
+You can see various artifacts being managed in the consortium by opening the link displayed by the below script:
 ```powershell
 ./scripts/consortium/ui.ps1
 ```
