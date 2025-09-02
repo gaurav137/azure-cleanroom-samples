@@ -210,6 +210,7 @@ if ($isOperator) {
         $oidcStorageAccount = $preProvisionedOIDCStorageAccount
         Write-Log Warning `
             "Using pre-provisioned OIDC storage account '$oidcStorageAccount'."
+
         $status = (az storage blob service-properties show `
                 --account-name $oidcStorageAccount `
                 --auth-mode login `
@@ -227,6 +228,14 @@ if ($isOperator) {
             -resourceGroup $resourceGroup `
             -storageAccountName @($oidcStorageAccount) `
             -objectId $objectId
+
+        Write-Host "Assigning 'Storage Account Contributor' permissions to logged in user"
+        az role assignment create --role "Storage Account Contributor" --scope $result.oidcsa.id --assignee-object-id $objectId --assignee-principal-type $(Get-Assignee-Principal-Type)
+
+        $sleepTime = 30
+        Write-Host "Waiting for $sleepTime seconds for permissions to get applied"
+        Start-Sleep -Seconds $sleepTime
+
         az storage blob service-properties update `
             --account-name $result.oidcsa.name `
             --static-website `
