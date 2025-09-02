@@ -229,12 +229,24 @@ if ($isOperator) {
             -storageAccountName @($oidcStorageAccount) `
             -objectId $objectId
 
-        Write-Host "Assigning 'Storage Account Contributor' permissions to logged in user"
-        az role assignment create --role "Storage Account Contributor" --scope $result.oidcsa.id --assignee-object-id $objectId --assignee-principal-type $(Get-Assignee-Principal-Type)
+        $role = "Storage Account Contributor"
+        $roleAssignment = (az role assignment list `
+                --assignee-object-id $objectId `
+                --scope $result.oidcsa.id `
+                --role $role `
+                --fill-principal-name false `
+                --fill-role-definition-name false) | ConvertFrom-Json
 
-        $sleepTime = 30
-        Write-Host "Waiting for $sleepTime seconds for permissions to get applied"
-        Start-Sleep -Seconds $sleepTime
+        if ($roleAssignment.Length -eq 1) {
+            Write-Host "$role permission on the storage account already exists, skipping assignment"
+        }
+        else {
+            Write-Host "Assigning '$role' permissions to logged in user"
+            az role assignment create --role $role --scope $result.oidcsa.id --assignee-object-id $objectId --assignee-principal-type $(Get-Assignee-Principal-Type)
+            $sleepTime = 30
+            Write-Host "Waiting for $sleepTime seconds for permissions to get applied"
+            Start-Sleep -Seconds $sleepTime
+        }
 
         az storage blob service-properties update `
             --account-name $result.oidcsa.name `
