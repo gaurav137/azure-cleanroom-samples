@@ -33,7 +33,6 @@ Write-Log OperationStarted `
     "Downloading data for '$persona' in '$demo' demo from '$src'..."
 
 foreach ($handle in $handles) {
-    $destDir = $dataDir
     $destDir = Join-Path -Path $dataDir -ChildPath $dataStartDate.ToString("yyyy-MM-dd")
     mkdir -p $destDir
     $dataStartDate = $dataStartDate.AddDays(1)
