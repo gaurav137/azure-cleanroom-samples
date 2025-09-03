@@ -29,15 +29,18 @@ az cleanroom config init `
 # Generate the cleanroom config which contains all the datasources, sinks and applications that are
 # configured by the collaborators.
 $azArgs = "cleanroom config view --cleanroom-config $cleanroomConfig --output-file $cleanroomConfig --configs "
-foreach ($collaboratorName in $collaborators)
-{
+foreach ($collaboratorName in $collaborators) {
     $fragment = "$publicDir/$collaboratorName-$demo.config"
     Write-Log Verbose `
         "Adding fragment for '$collaboratorName' ('$fragment')..."
     $azArgs = $azArgs + "$fragment "
 }
 
-Start-Process az $azArgs -Wait
+$proc = Start-Process az $azArgs -Wait -PassThru
+if (0 -ne $proc.ExitCode) {
+    throw "Command failed."
+}
+
 Write-Log OperationCompleted `
     "Generated cleanroom specification for contract '$contractId' at '$cleanroomConfig'." 
 
@@ -55,10 +58,10 @@ az cleanroom governance contract create `
 
 # Submitting a contract proposal.
 $version = (az cleanroom governance contract show `
-    --id $contractId `
-    --query "version" `
-    --output tsv `
-    --governance-client $cgsClient)
+        --id $contractId `
+        --query "version" `
+        --output tsv `
+        --governance-client $cgsClient)
 
 az cleanroom governance contract propose `
     --version $version `
