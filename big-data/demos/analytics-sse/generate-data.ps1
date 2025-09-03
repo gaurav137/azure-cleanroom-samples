@@ -1,7 +1,8 @@
 param(
-    [ValidateSet("northwind", "woodgrove")]
+    [ValidateSet("northwind", "woodgrove", IgnoreCase=$false)]
     [string]$persona = "$env:PERSONA",
-    [string]$demo = "$(Split-Path $PSScriptRoot -Leaf)"
+    [string]$demo = "$(Split-Path $PSScriptRoot -Leaf)",
+    [datetime]$dataStartDate = [datetime]"2025-09-01"
 )
 
 #https://learn.microsoft.com/en-us/powershell/scripting/learn/experimental-features?view=powershell-7.4#psnativecommanderroractionpreference
@@ -21,10 +22,10 @@ if (-not (("northwind", "woodgrove") -contains $persona)) {
 $src = "https://github.com/Azure-Samples/Synapse/raw/refs/heads/main/Data/Tweets"
 
 if ("northwind" -eq $persona) {
-    $handles = ("BrigitMurtaughTweets", "FranmerMSTweets", "JeremyLiknessTweets")
+    $handles = ("BrigitMurtaughTweets", "FranmerMSTweets", "JeremyLiknessTweets", "mwinkleTweets")
 }
 else {
-    $handles = ("RahulPotharajuTweets", "MikeDoesBigDataTweets", "SQLCindyTweets")
+    $handles = ("RahulPotharajuTweets", "raghurwiTweets", "MikeDoesBigDataTweets", "SQLCindyTweets")
 }
 
 $dataDir = "$PSScriptRoot/datasource/$persona/input"
@@ -32,9 +33,12 @@ Write-Log OperationStarted `
     "Downloading data for '$persona' in '$demo' demo from '$src'..."
 
 foreach ($handle in $handles) {
-    Write-Log Verbose `
-        "Downloading data for '$handle'..."
-    curl -s -L "$src/$handle.csv" -o "$dataDir/$handle.csv"
+    $destDir = Join-Path -Path $dataDir -ChildPath $dataStartDate.ToString("yyyy-MM-dd")
+    mkdir -p $destDir
+    $dataStartDate = $dataStartDate.AddDays(1)
+
+    Write-Output "Downloading data for '$handle' to {$destDir}..."
+    curl -sS -L "$src/$handle.csv" -o "$destDir/$handle.csv"
 }
 
 Write-Log OperationCompleted `

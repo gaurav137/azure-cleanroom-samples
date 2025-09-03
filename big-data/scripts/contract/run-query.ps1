@@ -6,7 +6,9 @@ param(
     [string]$samplesRoot = "/home/samples",
     [string]$publicDir = "$samplesRoot/demo-resources/public",
     [string]$privateDir = "$samplesRoot/demo-resources/private",
-    [string]$cgsClient = "azure-cleanroom-samples-governance-client-$persona"
+    [string]$cgsClient = "azure-cleanroom-samples-governance-client-$persona",
+    [Nullable[DateTimeOffset]]$startDate = $null,
+    [Nullable[DateTimeOffset]]$endDate = $null
 )
 
 #https://learn.microsoft.com/en-us/powershell/scripting/learn/experimental-features?view=powershell-7.4#psnativecommanderroractionpreference
@@ -23,7 +25,9 @@ function Get-TimeStamp {
 function Invoke-SqlJobAndWait {
     param (
         [string]$queryDocumentId,
-        [string]$analyticsEndpoint
+        [string]$analyticsEndpoint,
+        [Nullable[DateTimeOffset]]$startDate,
+        [Nullable[DateTimeOffset]]$endDate
     )
 
     $token = (az cleanroom governance client get-access-token --query accessToken -o tsv --name $cgsClient)
@@ -34,14 +38,15 @@ function Invoke-SqlJobAndWait {
 
         # Additional Local-Authorization header support is added in agent as kubectl proxy command drops Authorization header.
         $runId = (New-Guid).ToString().Substring(0, 8)
+        $body = @{ runId = $runId }
+        if ($startDate) { $body.startDate = $startDate }
+        if ($endDate) { $body.endDate = $endDate }
+
         $script:submissionJson = curl -k -s --fail-with-body -X POST "${analyticsEndpoint}/queries/$queryDocumentId/run" `
             -H "content-type: application/json" `
             -H "Local-Authorization: Bearer $token" `
-            -d @"
-{
-    "runId": "$runId"
-}
-"@
+            -d ($body | ConvertTo-Json -Compress)
+
         if ($LASTEXITCODE -ne 0) {
             Write-Output $script:submissionJson | jq
             throw "/queries/$queryDocumentId/run failed. Check the output above for details."
@@ -124,7 +129,13 @@ $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
     }
 }
 
+if ((-not $startDate -and $endDate) -or (-not $endDate -and $startDate)) {
+    throw "Both startDate and endDate should be specified together."
+}
+
 Write-Output "Executing query '$queryDocumentId' as '$persona'..."
 Invoke-SqlJobAndWait `
     -queryDocumentId $queryDocumentId `
-    -analyticsEndpoint $analyticsEndpoint
+    -analyticsEndpoint $analyticsEndpoint `
+    -startDate $startDate `
+    -endDate $endDate
