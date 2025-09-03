@@ -1,4 +1,4 @@
-# [Work In Progress] Azure Clean Room Big Data Samples <!-- omit from toc -->
+# Azure Clean Room Big Data Samples <!-- omit from toc -->
 
 This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (**CCR**)](https://github.com/Azure/azure-cleanroom) for big data multi-party collaboration.
 
@@ -32,9 +32,11 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
   - [Executing the query (woodgrove)](#executing-the-query-woodgrove)
   - [View output (woodgrove)](#view-output-woodgrove)
   - [Governance UI (northwind, woodgrove)](#governance-ui-northwind-woodgrove)
-- [Troubleshooting](#troubleshooting)
-  - [Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`](#hitting-taskcanceledexception-or-httprequestexception-error-during-run-queryps1)
-  - [The containers backing the various personas stopped. How to re-start them and resume the workflow?](#the-containers-backing-the-various-personas-stopped-how-to-re-start-them-and-resume-the-workflow)
+- [Advanced Topics](#advanced-topics)
+  - [How do I specify a date range for query execution ?](#how-do-i-specify-a-date-range-for-query-execution-)
+  - [Troubleshooting](#troubleshooting)
+    - [Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`](#hitting-taskcanceledexception-or-httprequestexception-error-during-run-queryps1)
+    - [The containers backing the various personas stopped. How to re-start them and resume the workflow?](#the-containers-backing-the-various-personas-stopped-how-to-re-start-them-and-resume-the-workflow)
   - [How do I switch between demos? (northwind, woodgrove)](#how-do-i-switch-between-demos-northwind-woodgrove)
   - [How do I cleanup the environment to create a brand new/fresh setup?](#how-do-i-cleanup-the-environment-to-create-a-brand-newfresh-setup)
 
@@ -363,6 +365,7 @@ The party interested in getting the query results (*woodgrove* in our case) can 
 ./scripts/contract/run-query.ps1
 ```
 
+
 ## View output (woodgrove)
 
 The query execution output is written to the datasinks configured. Check the Azure storage container or S3 bucket to see the output files that would get generated.
@@ -377,8 +380,19 @@ You can see various artifacts being managed in the consortium by opening the lin
 Open http://localhost:xxx in your browser to access the governance portal.
 ```
 
-# Troubleshooting
-## Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`
+# Advanced Topics
+## How do I specify a date range for query execution ?
+```powershell
+$startDate = [datetimeoffset]"2025-09-01"
+./scripts/contract/run-query.ps1 -startDate $startDate -endDate $startDate.AddDays(2)
+```
+The demos can optionally run by reading the data only for the specified date range. The `generate-data.ps1` command generates data divided into folders, each having the date (in format 'yyyy-MM-dd') as its name.
+The run-query.ps1 should have both the start and end dates mentioned for the query to read the data only from the specified date range.
+If no date range is mentioned in the run-query.ps1, all the data from the data sources is loaded and used for running the query.
+
+
+## Troubleshooting
+### Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`
 You might encounter the below errors on executing run-query.ps1 while previously it worked successfully:
 ```json
 Executing query 'woodgrove-query1-ec6308e0' as 'woodgrove'...
@@ -410,7 +424,7 @@ To resolve this issue re-run the following command from the `operator` console:
 ```
 The above script will perform CCF network recovery if its required to bring back the instance. After this is successful try running the query again.
 
-## The containers backing the various personas stopped. How to re-start them and resume the workflow?
+### The containers backing the various personas stopped. How to re-start them and resume the workflow?
 If you had a running setup that was successfully executing queries and the client side containers for one or more personas stopped for any reason then do the following:
 
 **Operator persona**  
