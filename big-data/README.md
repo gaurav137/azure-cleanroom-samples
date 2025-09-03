@@ -439,9 +439,10 @@ You may encounter the below error on running `accept-invitation.ps1`:
 ![alt text](../assets/reauth_required.png)  
 
 This happens if the login session for the persona has gone stale. To fix this:
-1. Remove `demo-resources/<persona>/private/azure-cleanroom-samples-governance-client-<persona>` folder. This contains the token cache.
+1. Remove `demo-resources/<persona>/private/azure-cleanroom-samples-governance-client-<persona>` folder. This contains the token cache.  
+![alt text](../assets/token-cache-folder.png)
 1. Stop the persona specific governance client containers (screenshot for `northwind` below):  
-![alt text](image.png)
+![alt text](../assets/northwind-governance-containers.png)
 1. Run `accept-invitation.ps1` again. This should not prompt you to login and restart the governance client containers using the new session.
 
 ## How do I switch between demos? (northwind, woodgrove)
