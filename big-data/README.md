@@ -458,6 +458,7 @@ This happens if the login session for the persona has gone stale. To fix this:
 1. Stop the persona specific governance client containers:  
 ![alt text](../assets/northwind-governance-containers.png)
 1. Run `accept-invitation.ps1` again. This would now prompt you to login and restart the governance client containers using the new session.
+
 ### Failure / Need help ?
 Please share the `demo-resources/shared/public/k8s-credentials.yaml` config with ACCR team to help out.
 
