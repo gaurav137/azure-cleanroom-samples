@@ -384,7 +384,7 @@ Open http://localhost:xxx in your browser to access the governance portal.
 ## How do I specify a date range for query execution ?
 ```powershell
 $startDate = [datetimeoffset]"2025-09-01"
-./scripts/contract/run-query.ps1 -startDate $startDate -endDate $startDate.AddDays(2)
+./scripts/contract/run-query.ps1 -startDate $startDate -endDate $startDate.AddDays(1)
 ```
 The demos can optionally run by reading the data only for the specified date range. The `generate-data.ps1` command generates data divided into folders, each having the date (in format 'yyyy-MM-dd') as its name.
 The run-query.ps1 should have both the start and end dates mentioned for the query to read the data only from the specified date range.
