@@ -136,7 +136,7 @@ Initialize the environment for executing the samples by executing the following 
 ```
 
 > [!NOTE]
-> For using a specific Azure subscription, use the `-subscription` parameter in the command above to specify the subscription ID.
+> For using an Azure subscription, use the `-subscription` parameter in the command above to specify the subscription ID.
 
 > [!IMPORTANT]
 > The above script creates an Azure Storage account for OIDC usage when running for the `operator` persona. If you have a pre-configured Azure storage account for OIDC usage then supply that account name for the `operator` persona as follows:
