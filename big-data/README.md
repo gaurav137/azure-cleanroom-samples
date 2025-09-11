@@ -39,7 +39,7 @@ This repository demonstrates usage of an [Azure **_Confidential Clean Room_** (*
 - [Troubleshooting](#troubleshooting)
   - [Hitting `TaskCanceledException` or `HttpRequestException` error during `run-query.ps1`](#hitting-taskcanceledexception-or-httprequestexception-error-during-run-queryps1)
   - [The containers backing the various personas stopped. How to re-start them and resume the workflow?](#the-containers-backing-the-various-personas-stopped-how-to-re-start-them-and-resume-the-workflow)
-  - [Failure / Need help ?](#failure--need-help-)
+  - [Failure/need help?](#failureneed-help)
 
 # Overview
 
@@ -478,5 +478,5 @@ This happens if the login session for the persona has gone stale. To fix this:
 ![alt text](../assets/northwind-governance-containers.png)
 1. Run `accept-invitation.ps1` again. This would now prompt you to login and restart the governance client containers using the new session.
 
-## Failure / Need help ?
+## Failure/need help?
 Please share the `demo-resources/shared/public/k8s-credentials.yaml` config with ACCR team to help out.
