@@ -144,6 +144,10 @@ Initialize the environment for executing the samples by executing the following 
 > $storageAccountName = <name>
 > ./scripts/initialize-environment.ps1 -preProvisionedOIDCStorageAccount $storageAccountName
 > ```
+> For running this sample on MSFT (internal) tenants, you need to use the `preProvisionedOIDCStorageAccount` parameter in the above command to specify the name of a preprovisioned storage account, to be used for the OIDC configuration. This storage account has to be whitelisted to be used for Federation on Managed Identities using the process:
+> 1. Create a static website in a storage account in your subscription and save the weburl using the steps outlined [here](https://learn.microsoft.com/en-us/azure/storage/blobs/storage-blob-static-website-how-to?tabs=azure-portal). This static website will be used for sharing OIDC public configs for the consortium
+> 2. Create an ICM using the template: https://portal.microsofticm.com/imp/v3/incidents/create?tmpl=F332q2 and use that web URL to request the exception. The internal TSG for this exception is present [here](https://microsoft.sharepoint.com/teams/CSEOAAD/SitePages/Entra-ID-Application-Authentication-Methods-Policy.aspx?ct=1699632892251&or=Teams-HL&ga=1#msi-federated-identity-credential-policy).
+
 
 Below is an example setup of 3 command prompts in which `start-environment` was executed before and now `initialize-environment` is about to be executed.
 
