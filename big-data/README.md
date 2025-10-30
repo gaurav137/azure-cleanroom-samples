@@ -351,6 +351,21 @@ You can see various artifacts like the datasets / audit events / queries being m
 Open http://localhost:xxx in your browser to access the governance portal.
 ```
 
+To view the audit events, follow this path on the Governance UI (on the left pane):
+  Contracts-> Select the "contract id" listed there -> Select "Events" button on the right pane
+
+Audit Events page looks like this: <TODO: Add images>
+
+These events will have all details on the query execution, such as:
+  1. Query execution start, the associated document id and the query runId
+  2. Loading input dataset and statistics like the input row count.
+  3. Kmin failure details like the pre-execution failures on the configured conditions.
+  4. Query failure errors and execution completion
+  5. Writing output on success and statistics like the output row count.
+  6. Kmin failure details like post-execution failures on the configured filtering.
+
+A few example of failures/statistics: <TODO: Add images>
+
 ## Adding query to execute in the collaboration (woodgrove)
 
 The following command adds details about the query to be executed within the clean room:
