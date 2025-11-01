@@ -10,6 +10,7 @@ param(
 
     [string]$contractConfig = "$privateDir/$resourceGroup-$demo.generated.json",
     [string]$contractFragment = "$privateDir/$persona-$demo.config",
+    [string]$governanceClient = "azure-cleanroom-samples-governance-client-$persona",
 
     [string]$managedIdentityName = ""
 )
@@ -23,8 +24,17 @@ Import-Module $PSScriptRoot/../azure-helpers/azure-helpers.psm1 -Force -DisableN
 
 Write-Log OperationStarted `
     "Initializing cleanroom specification '$contractFragment'..." 
-az cleanroom config init `
-    --cleanroom-config $contractFragment
+
+#TODOANANT Move this to public and do only once per demo setup ??
+$runId = (New-Guid).ToString().Substring(0, 8)
+$env:CLEANROOM_COLLABORATION_CONFIG_FILE = "$publicDir/collaboration-config-$runId.yaml"
+
+$personaUserId = $(az cleanroom governance client show --name $governanceClient --query userTokenClaims.oid -o tsv)
+
+az cleanroom collaboration connect `
+    --collaboration-name $governanceClient `
+    --collaborator-id $personaUserId `
+    --governance-client $governanceClient
 
 if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
     Write-Log Verbose `
@@ -43,25 +53,15 @@ else {
     $mi = (az identity create `
             --name $managedIdentityName `
             --resource-group $resourceGroup) | ConvertFrom-Json
-    az cleanroom config add-identity az-federated `
-        --cleanroom-config $contractFragment `
-        -n "$persona-identity" `
+
+    az cleanroom collaboration identity add az-federated `
+        --collaboration-name $governanceClient `
+        --identity-name "$persona-identity" `
         --client-id $mi.clientId `
         --tenant-id $mi.tenantId `
-        --issuer-url $(Get-Content $publicDir/issuer.url) `
+        --token-issuer-url $(Get-Content $publicDir/issuer.url) `
         --backing-identity cleanroom_cgs_oidc
+
     Write-Log OperationCompleted `
         "Added identity '$persona-identity' backed by '$managedIdentityName'."
 }
-
-$configResult = @{
-    contractFragment = ""
-    mi               = @{}
-}
-$configResult.contractFragment = $contractFragment
-$configResult.mi = $mi
-
-$configResult | ConvertTo-Json -Depth 100 | Out-File $contractConfig
-Write-Log OperationCompleted `
-    "Contract configuration written to '$contractConfig'."
-return $configResult

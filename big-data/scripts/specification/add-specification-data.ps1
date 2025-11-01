@@ -8,6 +8,7 @@ param(
     [string]$samplesRoot = "/home/samples",
     [string]$privateDir = "$samplesRoot/demo-resources/private",
     [string]$demosRoot = "$samplesRoot/demos",
+    [string]$governanceClient = "azure-cleanroom-samples-governance-client-$persona",
 
     [string]$contractConfig = "$privateDir/$resourceGroup-$demo.generated.json",
     [string]$secretstoreConfig = "$privateDir/secretstores.config",
@@ -33,16 +34,18 @@ if (Test-Path -Path $datasourcePath) {
     foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasourceName = "$persona-$dir".ToLower()
-        az cleanroom config add-datasource `
-            --cleanroom-config $contractConfigResult.contractFragment `
-            --name $datasourceName `
-            --datastore-config $datastoreConfig `
+        az cleanroom collaboration dataset publish `
+            --collaboration-name $governanceClient `
+            --contract-id $contractId `
+            --dataset-name $datasourceName `
             --datastore-name $datastoreName `
-            --secretstore-config $secretStoreConfig `
-            --dek-secret-store $persona-dek-store `
-            --kek-secret-store $persona-kek-store `
-            --kek-name $kekName `
-            --identity "$persona-identity"
+            --dek-secret-store-name $persona-dek-store `
+            --kek-secret-store-name $persona-kek-store `
+            --identity-name $persona-identity `
+            --policy-access-mode read `
+            --policy-allowed-fields "date,time,author,mentions" `
+            --datastore-config-file $datastoreConfig
+
         Write-Log OperationCompleted `
             "Added datasource '$datasourceName' ($datastoreName)."
     }
@@ -57,16 +60,18 @@ if (Test-Path -Path $datasinkPath) {
     foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasinkName = "$persona-$dir".ToLower()
-        az cleanroom config add-datasink `
-            --cleanroom-config $contractConfigResult.contractFragment `
-            --name $datasinkName `
-            --datastore-config $datastoreConfig `
+        az cleanroom collaboration dataset publish `
+            --collaboration-name $governanceClient `
+            --contract-id $contractId `
+            --dataset-name $datasinkName `
             --datastore-name $datastoreName `
-            --secretstore-config $secretStoreConfig `
-            --dek-secret-store $persona-dek-store `
-            --kek-secret-store $persona-kek-store `
-            --kek-name $kekName `
-            --identity "$persona-identity"
+            --dek-secret-store-name $persona-dek-store `
+            --kek-secret-store-name $persona-kek-store `
+            --identity-name $persona-identity `
+            --policy-access-mode write `
+            --policy-allowed-fields "author,Number_Of_Mentions" `
+            --datastore-config-file $datastoreConfig
+
         Write-Log OperationCompleted `
             "Added datasink '$datasinkName' ($datastoreName)."
     }
