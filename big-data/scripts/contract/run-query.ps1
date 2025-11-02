@@ -25,35 +25,24 @@ function Get-TimeStamp {
 function Invoke-SqlJobAndWait {
     param (
         [string]$queryDocumentId,
-        [string]$analyticsEndpoint,
+        [string]$collaborationContext,
         [Nullable[DateTimeOffset]]$startDate,
         [Nullable[DateTimeOffset]]$endDate
     )
 
-    $token = (az cleanroom governance client get-access-token --query accessToken -o tsv --name $cgsClient)
-    $script:submissionJson = $null
-    & {
-        # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
-        $PSNativeCommandUseErrorActionPreference = $false
 
-        # Additional Local-Authorization header support is added in agent as kubectl proxy command drops Authorization header.
-        $runId = (New-Guid).ToString().Substring(0, 8)
-        $body = @{ runId = $runId }
-        if ($startDate) { $body.startDate = $startDate }
-        if ($endDate) { $body.endDate = $endDate }
+    Write-Host "Setting collaboration context to '$collaborationContext'"
+    az cleanroom collaboration context set --collaboration-name $collaborationContext
 
-        $script:submissionJson = curl -k -s --fail-with-body -X POST "${analyticsEndpoint}/queries/$queryDocumentId/run" `
-            -H "content-type: application/json" `
-            -H "Local-Authorization: Bearer $token" `
-            -d ($body | ConvertTo-Json -Compress)
+    $queryParams = @{}
+    if ($startDate) { $queryParams.startDate = $startDate }
+    if ($endDate) { $queryParams.endDate = $endDate }
+    $queryParamsJson = $queryParams | ConvertTo-Json -Compress
 
-        if ($LASTEXITCODE -ne 0) {
-            Write-Output $script:submissionJson | jq
-            throw "/queries/$queryDocumentId/run failed. Check the output above for details."
-        }
-    }
+    $submissionJson = (az cleanroom collaboration spark-sql execute --application-name $queryDocumentId --application-parameters $queryParamsJson)
+    Write-Host "Submitted run for $queryDocumentId. Job details: $submissionJson"
 
-    $submissionResult = $script:submissionJson | ConvertFrom-Json
+    $submissionResult = $submissionJson | ConvertFrom-Json
     $jobId = $submissionResult.id
     Write-Output "Job submitted with ID: $jobId"
 
@@ -65,21 +54,8 @@ function Invoke-SqlJobAndWait {
     do {
         Write-Host "$(Get-TimeStamp) Checking status of job: $jobId"
 
-        $token = (az cleanroom governance client get-access-token --query accessToken -o tsv --name $cgsClient)
-        $script:jobStatusResponse = ""
-        & {
-            # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
-            $PSNativeCommandUseErrorActionPreference = $false
-            $script:jobStatusResponse = $(curl -k -s --fail-with-body -X GET "${analyticsEndpoint}/status/$jobId" `
-                    -H "Local-Authorization: Bearer $token")
-            if ($LASTEXITCODE -ne 0) {
-                $script:jobStatusResponse | jq
-                throw "/status/$jobId failed. Check the output above for details."
-            }
-        }
-
-        $script:jobStatusResponse | jq
-        $jobStatus = $script:jobStatusResponse | ConvertFrom-Json
+        $jobStatusResponse = (az cleanroom collaboration spark-sql get-execution-status --application-name $queryDocumentId --job-id $jobId)
+        $jobStatus = $jobStatusResponse | ConvertFrom-Json
 
         if ($jobStatus.status.applicationState.state -eq "COMPLETED") {
             Write-Host -ForegroundColor Green "$(Get-TimeStamp) Application has completed execution."
@@ -136,6 +112,6 @@ if ((-not $startDate -and $endDate) -or (-not $endDate -and $startDate)) {
 Write-Output "Executing query '$queryDocumentId' as '$persona'..."
 Invoke-SqlJobAndWait `
     -queryDocumentId $queryDocumentId `
-    -analyticsEndpoint $analyticsEndpoint `
+    -collaborationContext $cgsClient `
     -startDate $startDate `
     -endDate $endDate
