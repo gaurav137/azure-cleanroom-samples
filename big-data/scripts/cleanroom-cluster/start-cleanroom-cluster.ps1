@@ -399,3 +399,29 @@ pwsh $PSScriptRoot/enable-analytics-workload.ps1 `
     -publicDir $publicDir `
     -securityPolicyCreationOption $option `
     -configEndpointFile $privateDir/analytics-workload-config-endpoint.json
+
+Write-Output "Fetching deployment information..."
+# Get the analytics endpoint from the deployed cluster.
+$clCluster = Get-Content $privateDir/cl-cluster.json | ConvertFrom-Json
+$analyticsEndpoint = $clCluster.analyticsWorkloadProfile.endpoint
+
+Write-Output "Using analytics endpoint: $analyticsEndpoint"
+$deploymentInformation = @{
+    url = $analyticsEndpoint
+} | ConvertTo-Json
+az cleanroom governance deployment information propose `
+    --deployment-information $deploymentInformation `
+    --contract-id $contractId `
+    --governance-client $ownerClient
+
+# Vote on the proposed deployment information.
+$proposalId = az cleanroom governance deployment information show `
+    --contract-id $contractId `
+    --governance-client $cgsClient `
+    --query "proposalIds[0]" `
+    --output tsv
+
+az cleanroom governance proposal vote `
+    --proposal-id $proposalId `
+    --action accept `
+    --governance-client $cgsClient
