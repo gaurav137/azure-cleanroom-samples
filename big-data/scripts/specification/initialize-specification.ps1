@@ -31,7 +31,7 @@ $env:CLEANROOM_COLLABORATION_CONFIG_FILE = "$publicDir/collaboration-config-$run
 
 $personaUserId = $(az cleanroom governance client show --name $governanceClient --query userTokenClaims.oid -o tsv)
 
-az cleanroom collaboration connect `
+az cleanroom collaboration context add `
     --collaboration-name $governanceClient `
     --collaborator-id $personaUserId `
     --governance-client $governanceClient
@@ -53,6 +53,9 @@ else {
     $mi = (az identity create `
             --name $managedIdentityName `
             --resource-group $resourceGroup) | ConvertFrom-Json
+
+    az cleanroom collaboration context set `
+        --collaboration-name $governanceClient
 
     az cleanroom collaboration identity add az-federated `
         --collaboration-name $governanceClient `

@@ -29,6 +29,9 @@ Write-Log OperationStarted `
     "Adding datasources and datasinks for '$persona' in the '$demo' demo to" `
     "'$($contractConfigResult.contractFragment)'..."
 
+az cleanroom collaboration context set `
+    --collaboration-name $governanceClient
+
 if (Test-Path -Path $datasourcePath) {
     $dirs = Get-ChildItem -Path $datasourcePath -Directory -Name
     foreach ($dir in $dirs) {
