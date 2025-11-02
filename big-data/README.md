@@ -375,7 +375,7 @@ The following command adds details about the query to be executed within the cle
 ./scripts/contract/add-query.ps1
 ```
 
-The query is picked from [query.txt](demos/analytics-sse/query/woodgrove/query1/query.txt).
+The query is picked from [segmentedQuery.txt](demos/analytics-sse/query/woodgrove/query1/segmentedQuery).
 
 ## Agreeing upon the query for execution (northwind, woodgrove)
 

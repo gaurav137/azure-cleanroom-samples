@@ -6,7 +6,6 @@ param(
     [string]$publicDir = "$samplesRoot/demo-resources/public",
     [string]$privateDir = "$samplesRoot/demo-resources/private",
     [string]$demosRoot = "$samplesRoot/demos",
-
     [string]$queryPath = "$demosRoot/$demo/query/$persona",
     [string]$cgsClient = "azure-cleanroom-samples-governance-client-$persona"
 )
@@ -20,52 +19,37 @@ Import-Module $PSScriptRoot/../common/common.psm1
 Write-Log OperationStarted `
     "Creating query documents in CCF for '$persona' in the '$demo' demo..."
 
+az cleanroom collaboration context set `
+    --collaboration-name $cgsClient
+
 $instanceId = (New-Guid).ToString().Substring(0, 8)
 if (Test-Path -Path $queryPath) {
     $dirs = Get-ChildItem -Path $queryPath -Directory -Name
     foreach ($dir in $dirs) {
         $queryName = "$("$persona-$dir".ToLower())-$instanceId"
-        $query = Get-Content "$queryPath/$dir/query.txt"
-        $queryDocument = [ordered]@{
-            "query"    = "$query"
-            "datasets" = [ordered]@{
-                "publisher_data" = $(Get-Content "$publicDir/northwind-input.dataset-id")
-                "consumer_data"  = $(Get-Content "$publicDir/woodgrove-input.dataset-id")
+        $query = Get-Content "$queryPath/$dir/segmentedQuery" | ConvertFrom-Yaml
+        # Get the segments into an array to get all segment names
+        $querySegments = @()
+        $segmentNames = ""
+        foreach ($segment in $query) {
+            $querySegments += $segment
+            $segmentNames += "$($segment.name)"
+            if ($segment -ne $query[-1]) {
+                $segmentNames += ","
             }
-            "datasink" = $(Get-Content "$publicDir/woodgrove-output.dataset-id")
         }
-        $queryDocumentId = $queryName
-        $documentApprovers = , @(
-            @{
-                "id"   = "$(az cleanroom governance client show --name "azure-cleanroom-samples-governance-client-northwind" --query userTokenClaims.oid -o tsv)"
-                "type" = "user"
-            },
-            @{
-                "id"   = "$(az cleanroom governance client show --name "azure-cleanroom-samples-governance-client-woodgrove" --query userTokenClaims.oid -o tsv)"
-                "type" = "user"
-            }
-        ) | ConvertTo-Json -Depth 100
         $contractId = Get-Content $publicDir/analytics.contract-id
-        Write-Log Verbose `
-            "Proposing '$queryName' query document with approvers as $documentApprovers..."
-        az cleanroom governance user-document create `
-            --data $($queryDocument | ConvertTo-Json -Depth 100)`
-            --id $queryDocumentId `
-            --approvers $documentApprovers `
-            --contract-id $contractId `
-            --governance-client $cgsClient
-        $version = (az cleanroom governance user-document show `
-                --id $queryDocumentId `
-                --governance-client $cgsClient `
-                --query "version" `
-                --output tsv)
-        $proposalId = (az cleanroom governance user-document propose `
-                --version $version `
-                --id $queryDocumentId `
-                --governance-client $cgsClient `
-                --query "proposalId" `
-                --output tsv)
-        $queryDocumentId | Out-File $publicDir/analytics.query-id
+
+        write-Log Verbose `
+            "Publishing query document '$queryName' with segments: $segmentNames..."
+
+        az cleanroom collaboration spark-sql publish `
+            --application-name $queryName `
+            --application-querysegments $segmentNames `
+            --application-querysegment-store-config-file $queryPath/$dir/segmentedQuery `
+            --application-input-dataset "publisher_data:$(Get-Content "$publicDir/northwind-input.dataset-id"), consumer_data:$(Get-Content "$publicDir/woodgrove-input.dataset-id")" `
+            --application-output-dataset "datasink:$(Get-Content "$publicDir/woodgrove-output.dataset-id")" `
+            --contract-id $contractId
 
         Write-Log OperationCompleted `
             "Query document '$queryName' is proposed in CCF. ProposalId: $proposalId."
