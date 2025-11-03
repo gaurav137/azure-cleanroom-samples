@@ -27,26 +27,14 @@ if (Test-Path -Path $queryPath) {
     $dirs = Get-ChildItem -Path $queryPath -Directory -Name
     foreach ($dir in $dirs) {
         $queryName = "$("$persona-$dir".ToLower())-$instanceId"
-        $query = Get-Content "$queryPath/$dir/segmentedQuery" | ConvertFrom-Yaml
-        # Get the segments into an array to get all segment names
-        $querySegments = @()
-        $segmentNames = ""
-        foreach ($segment in $query) {
-            $querySegments += $segment
-            $segmentNames += "$($segment.name)"
-            if ($segment -ne $query[-1]) {
-                $segmentNames += ","
-            }
-        }
         $contractId = Get-Content $publicDir/analytics.contract-id
 
         write-Log Verbose `
-            "Publishing query document '$queryName' with segments: $segmentNames..."
+            "Publishing query document '$queryName'"
 
         az cleanroom collaboration spark-sql publish `
             --application-name $queryName `
-            --application-querysegments $segmentNames `
-            --application-querysegment-store-config-file $queryPath/$dir/segmentedQuery `
+            --application-querysegment-config-file $queryPath/$dir/segmentedQuery.yaml `
             --application-input-dataset "publisher_data:$(Get-Content "$publicDir/northwind-input.dataset-id"), consumer_data:$(Get-Content "$publicDir/woodgrove-input.dataset-id")" `
             --application-output-dataset "datasink:$(Get-Content "$publicDir/woodgrove-output.dataset-id")" `
             --contract-id $contractId

@@ -35,17 +35,30 @@ if (Test-Path -Path $datasourcePath) {
     foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasourceName = "$persona-$dir".ToLower()
-        az cleanroom collaboration dataset publish `
-            --contract-id $contractId `
-            --dataset-name $datasourceName `
-            --datastore-name $datastoreName `
-            --dek-secret-store-name $persona-dek-store `
-            --kek-secret-store-name $persona-kek-store `
-            --identity-name $persona-identity `
-            --policy-access-mode read `
-            --policy-allowed-fields "date,time,author,mentions" `
-            --datastore-config-file $datastoreConfig `
-            --secretstore-config-file $secretstoreConfig
+
+        if ($demo -match "sse" -and $persona -eq "woodgrove") {
+            az cleanroom collaboration dataset publish `
+                --contract-id $contractId `
+                --dataset-name $datasourceName `
+                --datastore-name $datastoreName `
+                --identity-name cleanroom_cgs_oidc `
+                --policy-access-mode read `
+                --policy-allowed-fields "date,time,author,mentions" `
+                --datastore-config-file $datastoreConfig
+        }
+        else {
+            az cleanroom collaboration dataset publish `
+                --contract-id $contractId `
+                --dataset-name $datasourceName `
+                --datastore-name $datastoreName `
+                --dek-secret-store-name $persona-dek-store `
+                --kek-secret-store-name $persona-kek-store `
+                --identity-name $persona-identity `
+                --policy-access-mode read `
+                --policy-allowed-fields "date,time,author,mentions" `
+                --datastore-config-file $datastoreConfig `
+                --secretstore-config-file $secretstoreConfig
+        }
 
         Write-Log OperationCompleted `
             "Added datasource '$datasourceName' ($datastoreName)."
@@ -63,17 +76,30 @@ if (Test-Path -Path $datasinkPath) {
     foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasinkName = "$persona-$dir".ToLower()
-        az cleanroom collaboration dataset publish `
-            --contract-id $contractId `
-            --dataset-name $datasinkName `
-            --datastore-name $datastoreName `
-            --dek-secret-store-name $persona-dek-store `
-            --kek-secret-store-name $persona-kek-store `
-            --identity-name $persona-identity `
-            --policy-access-mode write `
-            --policy-allowed-fields "author,Number_Of_Mentions" `
-            --datastore-config-file $datastoreConfig `
-            --secretstore-config-file $secretstoreConfig
+
+        if ($demo -match "sse" -and $persona -eq "woodgrove") {
+            az cleanroom collaboration dataset publish `
+                --contract-id $contractId `
+                --dataset-name $datasinkName `
+                --datastore-name $datastoreName `
+                --identity-name cleanroom_cgs_oidc `
+                --policy-access-mode write `
+                --policy-allowed-fields "author,Number_Of_Mentions" `
+                --datastore-config-file $datastoreConfig
+        }
+        else {
+            az cleanroom collaboration dataset publish `
+                --contract-id $contractId `
+                --dataset-name $datasinkName `
+                --datastore-name $datastoreName `
+                --dek-secret-store-name $persona-dek-store `
+                --kek-secret-store-name $persona-kek-store `
+                --identity-name $persona-identity `
+                --policy-access-mode write `
+                --policy-allowed-fields "author,Number_Of_Mentions" `
+                --datastore-config-file $datastoreConfig `
+                --secretstore-config-file $secretstoreConfig
+        }
 
         Write-Log OperationCompleted `
             "Added datasink '$datasinkName' ($datastoreName)."
