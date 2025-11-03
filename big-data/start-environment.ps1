@@ -8,7 +8,7 @@ param(
     [string]$demo,
 
     [string]$resourceGroup = "",
-    [string]$resourceGroupLocation = "westus",
+    [string]$resourceGroupLocation = "westeurope",
 
     [string]$imageName = "azure-cleanroom-samples",
     [string]$dockerFileDir = "./big-data/docker",
