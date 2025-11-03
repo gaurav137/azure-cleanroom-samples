@@ -412,7 +412,7 @@ $deploymentInformation = @{
 az cleanroom governance deployment information propose `
     --deployment-information $deploymentInformation `
     --contract-id $contractId `
-    --governance-client $ownerClient
+    --governance-client $cgsClient
 
 # Vote on the proposed deployment information.
 $proposalId = az cleanroom governance deployment information show `

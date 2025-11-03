@@ -83,6 +83,9 @@ All the involved parties need to bring up a local environment to participate in 
 >
 > It is **recommended to use GitHub Codespaces** to create the local environment which would have the above prerequisites pre-installed.
 
+> [!NOTE]
+> If you have tried this sample in the past, it is necessary to remove all previously used container images from your docker, without which new images will not get pulled.
+
 Each party requires an independent environment. To create such an environment, open a separate powershell window for each party and run the following commands:
 
 

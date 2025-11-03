@@ -6,11 +6,11 @@ param(
     [string]$kekName = $($($(New-Guid).Guid) -replace '-').ToLower(),
 
     [string]$samplesRoot = "/home/samples",
+    [string]$publicDir = "$samplesRoot/demo-resources/public",
     [string]$privateDir = "$samplesRoot/demo-resources/private",
     [string]$demosRoot = "$samplesRoot/demos",
     [string]$governanceClient = "azure-cleanroom-samples-governance-client-$persona",
 
-    [string]$contractConfig = "$privateDir/$resourceGroup-$demo.generated.json",
     [string]$secretstoreConfig = "$privateDir/secretstores.config",
     [string]$datastoreConfig = "$privateDir/datastores.config",
     [string]$datasourcePath = "$demosRoot/$demo/datasource/$persona",
@@ -23,22 +23,19 @@ $PSNativeCommandUseErrorActionPreference = $true
 
 Import-Module $PSScriptRoot/../common/common.psm1
 
-$contractConfigResult = Get-Content $contractConfig | ConvertFrom-Json
-
 Write-Log OperationStarted `
-    "Adding datasources and datasinks for '$persona' in the '$demo' demo to" `
-    "'$($contractConfigResult.contractFragment)'..."
+    "Adding datasources and datasinks for '$persona' in the '$demo' demo"
 
 az cleanroom collaboration context set `
     --collaboration-name $governanceClient
 
+$contractId = Get-Content $publicDir/analytics.contract-id
 if (Test-Path -Path $datasourcePath) {
     $dirs = Get-ChildItem -Path $datasourcePath -Directory -Name
     foreach ($dir in $dirs) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasourceName = "$persona-$dir".ToLower()
         az cleanroom collaboration dataset publish `
-            --collaboration-name $governanceClient `
             --contract-id $contractId `
             --dataset-name $datasourceName `
             --datastore-name $datastoreName `
@@ -47,7 +44,8 @@ if (Test-Path -Path $datasourcePath) {
             --identity-name $persona-identity `
             --policy-access-mode read `
             --policy-allowed-fields "date,time,author,mentions" `
-            --datastore-config-file $datastoreConfig
+            --datastore-config-file $datastoreConfig `
+            --secretstore-config-file $secretstoreConfig
 
         Write-Log OperationCompleted `
             "Added datasource '$datasourceName' ($datastoreName)."
@@ -64,7 +62,6 @@ if (Test-Path -Path $datasinkPath) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasinkName = "$persona-$dir".ToLower()
         az cleanroom collaboration dataset publish `
-            --collaboration-name $governanceClient `
             --contract-id $contractId `
             --dataset-name $datasinkName `
             --datastore-name $datastoreName `
@@ -73,7 +70,8 @@ if (Test-Path -Path $datasinkPath) {
             --identity-name $persona-identity `
             --policy-access-mode write `
             --policy-allowed-fields "author,Number_Of_Mentions" `
-            --datastore-config-file $datastoreConfig
+            --datastore-config-file $datastoreConfig `
+            --secretstore-config-file $secretstoreConfig
 
         Write-Log OperationCompleted `
             "Added datasink '$datasinkName' ($datastoreName)."

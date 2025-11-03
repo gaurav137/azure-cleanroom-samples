@@ -26,8 +26,8 @@ Write-Log OperationStarted `
     "Initializing cleanroom specification '$contractFragment'..." 
 
 #TODOANANT Move this to public and do only once per demo setup ??
-$runId = (New-Guid).ToString().Substring(0, 8)
-$env:CLEANROOM_COLLABORATION_CONFIG_FILE = "$publicDir/collaboration-config-$runId.yaml"
+#$runId = (New-Guid).ToString().Substring(0, 8)
+#$env:CLEANROOM_COLLABORATION_CONFIG_FILE = "$publicDir/collaboration-config-$runId.yaml"
 
 $personaUserId = $(az cleanroom governance client show --name $governanceClient --query userTokenClaims.oid -o tsv)
 
@@ -58,7 +58,6 @@ else {
         --collaboration-name $governanceClient
 
     az cleanroom collaboration identity add az-federated `
-        --collaboration-name $governanceClient `
         --identity-name "$persona-identity" `
         --client-id $mi.clientId `
         --tenant-id $mi.tenantId `
@@ -67,4 +66,16 @@ else {
 
     Write-Log OperationCompleted `
         "Added identity '$persona-identity' backed by '$managedIdentityName'."
+
+    $configResult = @{
+        contractFragment = ""
+        mi               = @{}
+    }
+    $configResult.contractFragment = $contractFragment
+    $configResult.mi = $mi
+
+    $configResult | ConvertTo-Json -Depth 100 | Out-File $contractConfig
+    Write-Log OperationCompleted `
+        "Contract configuration written to '$contractConfig'."
+    return $configResult
 }
