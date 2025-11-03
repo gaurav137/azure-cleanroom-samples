@@ -49,6 +49,8 @@ if (Test-Path -Path $datasourcePath) {
 
         Write-Log OperationCompleted `
             "Added datasource '$datasourceName' ($datastoreName)."
+
+        $datasourceName | Out-File $publicDir/$datasourceName.dataset-id
     }
 }
 else {
@@ -75,6 +77,8 @@ if (Test-Path -Path $datasinkPath) {
 
         Write-Log OperationCompleted `
             "Added datasink '$datasinkName' ($datastoreName)."
+
+        $datasinkName | Out-File $publicDir/$datasinkName.dataset-id
     }
 }
 else {

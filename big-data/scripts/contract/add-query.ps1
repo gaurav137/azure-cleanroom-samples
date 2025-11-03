@@ -50,7 +50,7 @@ if (Test-Path -Path $queryPath) {
             --application-input-dataset "publisher_data:$(Get-Content "$publicDir/northwind-input.dataset-id"), consumer_data:$(Get-Content "$publicDir/woodgrove-input.dataset-id")" `
             --application-output-dataset "datasink:$(Get-Content "$publicDir/woodgrove-output.dataset-id")" `
             --contract-id $contractId
-
+        $queryName | Out-File $publicDir/analytics.query-id
         Write-Log OperationCompleted `
             "Query document '$queryName' is proposed in CCF. ProposalId: $proposalId."
     }
