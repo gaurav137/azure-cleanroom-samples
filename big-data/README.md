@@ -356,8 +356,7 @@ Open http://localhost:xxx in your browser to access the governance portal.
 
 To view the audit events, follow this path on the Governance UI (on the left pane):
   Contracts-> Select the "contract id" listed there -> Select "Events" button on the right pane
-
-Audit Events page looks like this: <TODO: Add images>
+![alt text](../assets/audit-eventspage.png)
 
 These events will have all details on the query execution, such as:
   1. Query execution start, the associated document id and the query runId
@@ -367,7 +366,11 @@ These events will have all details on the query execution, such as:
   5. Writing output on success and statistics like the output row count.
   6. Kmin failure details like post-execution failures on the configured filtering.
 
-A few example of failures/statistics: <TODO: Add images>
+A few examples of statistics:
+![alt text](../assets/audit-loadstats.png)
+
+Failures:
+![alt text](../assets/audit-prekmin.png)
 
 ## Adding query to execute in the collaboration (woodgrove)
 
