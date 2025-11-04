@@ -25,10 +25,6 @@ Import-Module $PSScriptRoot/../azure-helpers/azure-helpers.psm1 -Force -DisableN
 Write-Log OperationStarted `
     "Initializing cleanroom specification '$contractFragment'..." 
 
-#TODOANANT Move this to public and do only once per demo setup ??
-#$runId = (New-Guid).ToString().Substring(0, 8)
-#$env:CLEANROOM_COLLABORATION_CONFIG_FILE = "$publicDir/collaboration-config-$runId.yaml"
-
 $personaUserId = $(az cleanroom governance client show --name $governanceClient --query userTokenClaims.oid -o tsv)
 
 az cleanroom collaboration context add `

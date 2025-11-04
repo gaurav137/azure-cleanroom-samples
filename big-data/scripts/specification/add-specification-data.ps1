@@ -36,14 +36,14 @@ if (Test-Path -Path $datasourcePath) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasourceName = "$persona-$dir".ToLower()
 
-        if ($demo -match "sse" -and $persona -eq "woodgrove") {
+        if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
             az cleanroom collaboration dataset publish `
                 --contract-id $contractId `
                 --dataset-name $datasourceName `
                 --datastore-name $datastoreName `
                 --identity-name cleanroom_cgs_oidc `
                 --policy-access-mode read `
-                --policy-allowed-fields "date,time,author,mentions" `
+                --policy-allowed-fields "date,author,mentions" `
                 --datastore-config-file $datastoreConfig
         }
         else {
@@ -55,7 +55,7 @@ if (Test-Path -Path $datasourcePath) {
                 --kek-secret-store-name $persona-kek-store `
                 --identity-name $persona-identity `
                 --policy-access-mode read `
-                --policy-allowed-fields "date,time,author,mentions" `
+                --policy-allowed-fields "date,author,mentions" `
                 --datastore-config-file $datastoreConfig `
                 --secretstore-config-file $secretstoreConfig
         }
@@ -77,7 +77,7 @@ if (Test-Path -Path $datasinkPath) {
         $datastoreName = "$demo-$persona-$dir".ToLower()
         $datasinkName = "$persona-$dir".ToLower()
 
-        if ($demo -match "sse" -and $persona -eq "woodgrove") {
+        if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
             az cleanroom collaboration dataset publish `
                 --contract-id $contractId `
                 --dataset-name $datasinkName `

@@ -405,6 +405,15 @@ Write-Output "Fetching deployment information..."
 $clCluster = Get-Content $privateDir/cl-cluster.json | ConvertFrom-Json
 $analyticsEndpoint = $clCluster.analyticsWorkloadProfile.endpoint
 
+#
+# Instead of accessing the service via ${analyticsEndpoint}, we will use kubectl proxy to access it via localhost.
+# This is needed as the public IP address for AKS load balancer is not accessible from machines that are not on corpnet.
+# https://kubernetes.io/docs/tasks/access-application-cluster/access-cluster-services/#manually-constructing-apiserver-proxy-urls
+# For Kind cluster infra also this technique works fine to access the service as it would be having a clusterIP
+# and thus not reachable from outside the cluster.
+#
+$analyticsEndpoint = "http://localhost:8181/api/v1/namespaces/cleanroom-spark-analytics-agent/services/https:cleanroom-spark-analytics-agent:443/proxy"
+
 Write-Output "Using analytics endpoint: $analyticsEndpoint"
 $deploymentInformation = @{
     url = $analyticsEndpoint

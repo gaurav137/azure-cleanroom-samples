@@ -26,23 +26,38 @@ function Invoke-SqlJobAndWait {
     param (
         [string]$queryDocumentId,
         [string]$collaborationContext,
+        [string]$analyticsEndpoint,
         [Nullable[DateTimeOffset]]$startDate,
         [Nullable[DateTimeOffset]]$endDate
     )
 
-
     Write-Host "Setting collaboration context to '$collaborationContext'"
     az cleanroom collaboration context set --collaboration-name $collaborationContext
 
-    $queryParams = @{}
-    if ($startDate) { $queryParams.startDate = $startDate }
-    if ($endDate) { $queryParams.endDate = $endDate }
-    $queryParamsJson = $queryParams | ConvertTo-Json -Compress
+    $token = (az cleanroom governance client get-access-token --query accessToken -o tsv --name $collaborationContext)
+    $script:submissionJson = $null
+    & {
+        # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
+        $PSNativeCommandUseErrorActionPreference = $false
 
-    $submissionJson = (az cleanroom collaboration spark-sql execute --application-name $queryDocumentId --application-parameters $queryParamsJson)
-    Write-Host "Submitted run for $queryDocumentId. Job details: $submissionJson"
+        # Additional Local-Authorization header support is added in agent as kubectl proxy command drops Authorization header.
+        $runId = (New-Guid).ToString().Substring(0, 8)
+        $body = @{ runId = $runId }
+        if ($startDate) { $body.startDate = $startDate }
+        if ($endDate) { $body.endDate = $endDate }
 
-    $submissionResult = $submissionJson | ConvertFrom-Json
+        $script:submissionJson = curl -k -s --fail-with-body -X POST "${analyticsEndpoint}/queries/$queryDocumentId/run" `
+            -H "content-type: application/json" `
+            -H "Local-Authorization: Bearer $token" `
+            -d ($body | ConvertTo-Json -Compress)
+
+        if ($LASTEXITCODE -ne 0) {
+            Write-Output $script:submissionJson | jq
+            throw "/queries/$queryDocumentId/run failed. Check the output above for details."
+        }
+    }
+
+    $submissionResult = $script:submissionJson | ConvertFrom-Json
     $jobId = $submissionResult.id
     Write-Output "Job submitted with ID: $jobId"
 
@@ -54,8 +69,21 @@ function Invoke-SqlJobAndWait {
     do {
         Write-Host "$(Get-TimeStamp) Checking status of job: $jobId"
 
-        $jobStatusResponse = (az cleanroom collaboration spark-sql get-execution-status --application-name $queryDocumentId --job-id $jobId)
-        $jobStatus = $jobStatusResponse | ConvertFrom-Json
+        $token = (az cleanroom governance client get-access-token --query accessToken -o tsv --name $cgsClient)
+        $script:jobStatusResponse = ""
+        & {
+            # Disable $PSNativeCommandUseErrorActionPreference for this scriptblock
+            $PSNativeCommandUseErrorActionPreference = $false
+            $script:jobStatusResponse = $(curl -k -s --fail-with-body -X GET "${analyticsEndpoint}/status/$jobId" `
+                    -H "Local-Authorization: Bearer $token")
+            if ($LASTEXITCODE -ne 0) {
+                $script:jobStatusResponse | jq
+                throw "/status/$jobId failed. Check the output above for details."
+            }
+        }
+
+        $script:jobStatusResponse | jq
+        $jobStatus = $script:jobStatusResponse | ConvertFrom-Json
 
         if ($jobStatus.status.applicationState.state -eq "COMPLETED") {
             Write-Host -ForegroundColor Green "$(Get-TimeStamp) Application has completed execution."
@@ -79,6 +107,7 @@ function Invoke-SqlJobAndWait {
 }
 
 $queryDocumentId = Get-Content $publicDir/analytics.query-id
+$contractId = Get-Content $publicDir/analytics.contract-id
 
 $kubeConfig = "$publicDir/k8s-credentials.yaml"
 if (-not (Test-Path -Path $kubeConfig)) {
@@ -87,7 +116,13 @@ if (-not (Test-Path -Path $kubeConfig)) {
 Get-Job -Command "*kubectl proxy --port 8181*" | Stop-Job
 Get-Job -Command "*kubectl proxy --port 8181*" | Remove-Job
 kubectl proxy --port 8181 --kubeconfig $kubeConfig &
-$analyticsEndpoint = "http://localhost:8181/api/v1/namespaces/cleanroom-spark-analytics-agent/services/https:cleanroom-spark-analytics-agent:443/proxy"
+
+$deploymentInformation = (az cleanroom governance deployment information show `
+        --contract-id $contractId `
+        --governance-client $cgsClient | ConvertFrom-Json)
+
+Write-Output "Submitting SQL job to analytics endpoint: $($deploymentInformation.data.url)"
+$analyticsEndpoint = $deploymentInformation.data.url
 
 $timeout = New-TimeSpan -Minutes 1
 $stopwatch = [System.Diagnostics.Stopwatch]::StartNew()
@@ -113,5 +148,6 @@ Write-Output "Executing query '$queryDocumentId' as '$persona'..."
 Invoke-SqlJobAndWait `
     -queryDocumentId $queryDocumentId `
     -collaborationContext $cgsClient `
+    -analyticsEndpoint $analyticsEndpoint `
     -startDate $startDate `
     -endDate $endDate
