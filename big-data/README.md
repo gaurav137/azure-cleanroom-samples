@@ -458,6 +458,22 @@ The sample query here demonstrates this [segmentedQuery.yaml](demos/analytics-ss
 The [Publish Data][scripts/data/publish-data.ps1] step uses the `az cleanroom datastore add` coommand to define the schema of the dataset using the parameter `schema-fields`, specifying the format and field names with data types.
 To publish these datasets, the [script](scripts/specification/add-specification-data.ps1) uses the `az cleanroom collaboration dataset publish` command with the parameter `policy-allowed-fields` to define which fields are allowed to be accessed by the query or as output.
 
+## How do I provide my sample data and sample query?
+1. Do not run the step to generate data i.e. ./scripts/data/generate-data.ps1
+2. Add sample data for northwind or woodgrove to the respective folder big-data/demos/$demo/datasource/$persona/input. You can directly add the data files or organize them in the form of folders, if required.
+3. Call the publish-data.ps1 script with the following parameters for northwind:
+   ```powershell
+      ./scripts/data/publish-data.ps1 -inputSchemaFormat <inputSchemaFormat> -inputSchema <inputSchema> -allowedInputFields <allowedInputFields> 
+   ```
+   Call the publish-data.ps1 script with the following parameters for woodgrove:
+   ```powershell
+      ./scripts/data/publish-data.ps1 -inputSchemaFormat <inputSchemaFormat> -inputSchema <inputSchema> -allowedInputFields <allowedInputFields> -outputSchemaFormat <outputSchemaFormat> -outputSchema <outputSchema> -allowedOutputFields <allowedOutputFields> 
+   ```
+   The allowed values for inputSchemaFormat and outputSchemaFormat are "csv", "json" and "parquet" <br>
+   The inputSchema and outputSchema should be comma separated pairs of columnName:datatype like "line_item_id:long,campaign:string" <br>
+   The allowedInputFields and allowedOutputFields should be comma separated values of columnNames like "line_item_id,campaign" <br>
+5. Replace the query present in big-data/demos/$demo/query/woodgrove/query1/segmentedQuery.yaml with your query. It can have a single segment or multiple segments as required. This query should refer to northwind's and woodgrove's data as publisher_data and consumer_data respectively. If you want to change these, you can visit add-query.ps1 and make the changes accordingly. 
+6. Now, run the rest of the steps starting from adding the query 
 
 ## How do I switch between demos? (northwind, woodgrove)
 Switching demos involves the below steps:
