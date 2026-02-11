@@ -120,7 +120,7 @@ if ($persona -eq "woodgrove" -and $demo -eq "analytics-s3-sse") {
         "No credential sharing infrastructure required for '$persona' for '$demo' demo..."
 }
 else {
-    if ($shareCredentials -or ($persona -eq "operator")) {
+    if ($shareCredentials) {
         & {
             Write-Log OperationStarted `
                 "Setting up credential sharing infrastructure..."
@@ -181,6 +181,11 @@ else {
         Write-Log OperationCompleted `
             "Credential sharing infrastructure deployed at '$credentialProxyEndpoint'."
     }
+    else {
+        Write-Log Verbose `
+            "Using managed identity authentication - no credential proxy required."
+        $credentialProxyEndpoint = $null
+    }
 }
 
 #
@@ -194,7 +199,6 @@ if ($persona -eq "operator") {
         # Use AZCLI_ overrides till latest images are available in mcr.microsoft.com.
         #
         $envVars = @{
-            "CREDENTIAL_PROXY_ENDPOINT"                                        = $credentialProxyEndpoint
             "AZCLI_CCF_PROVIDER_CLIENT_IMAGE"                                  = "$repo/ccf/ccf-provider-client:$tag"
             "AZCLI_CCF_PROVIDER_PROXY_IMAGE"                                   = "$repo/ccr-proxy:$tag"
             "AZCLI_CCF_PROVIDER_ATTESTATION_IMAGE"                             = "$repo/ccr-attestation:$tag"
@@ -206,6 +210,13 @@ if ($persona -eq "operator") {
             "AZCLI_CCF_PROVIDER_CONTAINER_REGISTRY_URL"                        = "$repo"
             "AZCLI_CCF_PROVIDER_NETWORK_SECURITY_POLICY_DOCUMENT_URL"          = "$repo/policies/ccf/ccf-network-security-policy:$tag"
             "AZCLI_CCF_PROVIDER_RECOVERY_SERVICE_SECURITY_POLICY_DOCUMENT_URL" = "$repo/policies/ccf/ccf-recovery-service-security-policy:$tag"
+        }
+        
+        if ($credentialProxyEndpoint) {
+            $envVars["CREDENTIAL_PROXY_ENDPOINT"] = $credentialProxyEndpoint
+        } else {
+            $envVars["IDENTITY_ENDPOINT"] = "http://169.254.169.254/metadata/identity/oauth2/token"
+            $envVars["IDENTITY_HEADER"] = "Metadata"
         }
         $proc = Start-Process docker -ArgumentList "compose -p $ccfProviderName -f $dockerFileDir/ccf/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait -PassThru
         if (0 -ne $proc.ExitCode) {
@@ -225,7 +236,6 @@ if ($persona -eq "operator") {
         #
         $semanticVersion = Get-SemanticVersionFromTag $tag
         $envVars = @{
-            "CREDENTIAL_PROXY_ENDPOINT"                                                           = $credentialProxyEndpoint
             "AZCLI_CLEANROOM_CLUSTER_PROVIDER_CLIENT_IMAGE"                                       = "$repo/cleanroom-cluster/cleanroom-cluster-provider-client:$tag"
             "AZCLI_CLEANROOM_CLUSTER_PROVIDER_PROXY_IMAGE"                                        = "$repo/ccr-proxy:$tag"
             "AZCLI_CLEANROOM_CLUSTER_PROVIDER_ATTESTATION_IMAGE"                                  = "$repo/ccr-attestation:$tag"
@@ -242,6 +252,13 @@ if ($persona -eq "operator") {
             "AZCLI_CLEANROOM_SIDECARS_VERSIONS_DOCUMENT_URL"                                      = "$repo/sidecar-digests:$tag"
             "AZCLI_CLEANROOM_ANALYTICS_APP_IMAGE_URL"                                             = "$repo/workloads/cleanroom-spark-analytics-app:$tag"
             "AZCLI_CLEANROOM_ANALYTICS_APP_IMAGE_POLICY_DOCUMENT_URL"                             = "$repo/policies/workloads/cleanroom-spark-analytics-app-security-policy:$tag"
+        }
+        
+        if ($credentialProxyEndpoint) {
+            $envVars["CREDENTIAL_PROXY_ENDPOINT"] = $credentialProxyEndpoint
+        } else {
+            $envVars["IDENTITY_ENDPOINT"] = "http://169.254.169.254/metadata/identity/oauth2/token"
+            $envVars["IDENTITY_HEADER"] = "Metadata"
         }
         $proc = Start-Process docker -ArgumentList "compose -p $cleanroomClusterProviderName -f $dockerFileDir/cleanroom-cluster/docker-compose.yaml up -d --remove-orphans" -Environment $envVars -Wait -PassThru
         if (0 -ne $proc.ExitCode) {
@@ -320,8 +337,8 @@ if ($persona -eq "operator") {
             --env DEMO=$demo `
             --env RESOURCE_GROUP=$resourceGroup `
             --env RESOURCE_GROUP_LOCATION=$resourceGroupLocation `
-            --env IDENTITY_ENDPOINT=$credentialProxyEndpoint `
-            --env IDENTITY_HEADER="dummy_required_value" `
+            --env IDENTITY_ENDPOINT="http://169.254.169.254/metadata/identity/oauth2/token" `
+            --env IDENTITY_HEADER="Metadata" `
             --env HOST_PERSONA_PRIVATE_DIR=$personaBase/$($privateDir) `
             --env CLEANROOM_REPO=$repo `
             --env CLEANROOM_TAG=$tag `
